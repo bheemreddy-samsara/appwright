@@ -38,7 +38,7 @@
   "dependencies": {
     "@empiricalrun/llm": "^0.9.25",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
-    "@playwright/test": "^1.47.1",
+    "@playwright/test": "^1.56.1",
     "appium": "^2.6.0",
     "appium-uiautomator2-driver": "^3.8.0",
     "appium-xcuitest-driver": "^7.27.0",
