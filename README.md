@@ -32,7 +32,7 @@ Links to help you get started.
 
 ### Minimum requirements
 
-- Node 18.20.4 or higher
+- Node 20.19.0 or higher (Appium 3 requirement)
 
 ### Install
 
@@ -107,6 +107,7 @@ the provider in your config.
       // See supported devices: https://www.browserstack.com/list-of-browsers-and-platforms/app_automate
       name: "Google Pixel 8",
       osVersion: "14.0",
+      appiumVersion: "3.1.0", // Override if your BrowserStack account does not yet support Appium 3
     },
     buildPath: "app-release.apk",
   },
@@ -129,6 +130,7 @@ the provider in your config.
       // See supported devices: https://www.lambdatest.com/list-of-real-devices
       name: "Pixel 8",
       osVersion: "14",
+      appiumVersion: "3.1.0", // Override if your LambdaTest account does not yet support Appium 3
     },
     buildPath: "app-release.apk",
   },

@@ -90,6 +90,12 @@ export type BrowserStackConfig = {
    * Default is false.
    */
   enableCameraImageInjection?: boolean;
+
+  /**
+   * Appium server version to request on BrowserStack.
+   * Defaults to Appium 3.1.0. Override if your account requires a different version.
+   */
+  appiumVersion?: string;
 };
 
 export type LambdaTestConfig = {
@@ -120,6 +126,12 @@ export type LambdaTestConfig = {
    * Default is false.
    */
   enableCameraImageInjection?: boolean;
+
+  /**
+   * Appium server version to request on LambdaTest.
+   * Defaults to Appium 3.1.0. Override if your account requires a different version.
+   */
+  appiumVersion?: string;
 };
 
 /**

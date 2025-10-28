@@ -24,6 +24,7 @@ These environment variables are required for the BrowserStack
 - BROWSERSTACK_ACCESS_KEY
 
 BrowserStack also requires `name` and `osVersion` of the device to be set in the projects in appwright config file.
+If BrowserStack has not enabled Appium 3 for your account yet, set `appiumVersion` in the device config (or `BROWSERSTACK_APPIUM_VERSION` env var) to request the correct server version.
 
 ### LambdaTest
 
@@ -36,6 +37,7 @@ These environment variables are required for the LambdaTest
 - LAMBDATEST_ACCESS_KEY
 
 LambdaTest also requires `name` and `osVersion` of the device to be set in the projects in appwright config file.
+If LambdaTest has not enabled Appium 3 for your account yet, set `appiumVersion` in the device config (or `LAMBDATEST_APPIUM_VERSION` env var) to request the correct server version.
 
 ### Android Emulator
 

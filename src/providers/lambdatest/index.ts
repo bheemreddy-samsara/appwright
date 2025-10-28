@@ -305,6 +305,11 @@ export class LambdaTestDeviceProvider implements DeviceProvider {
   private createConfig() {
     const platformName = this.project.use.platform;
     const envVarKey = envVarKeyForBuild(this.project.name);
+    const deviceConfig = this.project.use.device as LambdaTestConfig;
+    const configuredAppiumVersion =
+      deviceConfig.appiumVersion ??
+      process.env.LAMBDATEST_APPIUM_VERSION ??
+      "3.1.0";
     if (!process.env[envVarKey]) {
       throw new Error(
         `process.env.${envVarKey} is not set. Did the file upload work?`,
@@ -320,7 +325,7 @@ export class LambdaTestDeviceProvider implements DeviceProvider {
       hostname: "mobile-hub.lambdatest.com",
       capabilities: {
         ...this.deviceInfoForSession(),
-        appiumVersion: "2.3.0",
+        appiumVersion: configuredAppiumVersion,
         platformName: platformName,
         queueTimeout: 600,
         idleTimeout: 600,

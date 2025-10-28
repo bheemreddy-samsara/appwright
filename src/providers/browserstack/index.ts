@@ -301,6 +301,11 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
     const platformName = this.project.use.platform;
     const projectName = path.basename(process.cwd());
     const envVarKey = envVarKeyForBuild(this.project.name);
+    const deviceConfig = this.project.use.device as BrowserStackConfig;
+    const configuredAppiumVersion =
+      deviceConfig.appiumVersion ??
+      process.env.BROWSERSTACK_APPIUM_VERSION ??
+      "3.1.0";
     if (!process.env[envVarKey]) {
       throw new Error(
         `process.env.${envVarKey} is not set. Did the file upload work?`,
@@ -319,15 +324,13 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
           debug: true,
           interactiveDebugging: true,
           networkLogs: true,
-          appiumVersion: "2.6.0",
-          enableCameraImageInjection: (
-            this.project.use.device as BrowserStackConfig
-          )?.enableCameraImageInjection,
+          appiumVersion: configuredAppiumVersion,
+          enableCameraImageInjection: deviceConfig?.enableCameraImageInjection,
           idleTimeout: 180,
-          deviceName: this.project.use.device?.name,
-          osVersion: (this.project.use.device as BrowserStackConfig).osVersion,
+          deviceName: deviceConfig?.name,
+          osVersion: deviceConfig.osVersion,
           platformName: platformName,
-          deviceOrientation: this.project.use.device?.orientation,
+          deviceOrientation: deviceConfig?.orientation,
           buildName: `${projectName} ${platformName}`,
           sessionName: `${projectName} ${platformName} test`,
           buildIdentifier:
