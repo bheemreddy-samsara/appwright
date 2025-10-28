@@ -64,7 +64,7 @@ We will use Playwright's [fixtures](https://playwright.dev/docs/test-fixtures) t
 
 ```ts
 import { test as base } from "@playwright/test";
-import { Device } from "appwright";
+import { Device } from "@samsara-dev/appwright";
 
 type WorkerFixtures = {
   userDevice: Device;

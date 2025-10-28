@@ -10,7 +10,7 @@ In Appwright, you can define multiple test configurations for different platform
 
 ```ts
 // In appwright.config.ts
-import { defineConfig, Platform } from "appwright";
+import { defineConfig, Platform } from "@samsara-dev/appwright";
 export default defineConfig({
   projects: [
     {
@@ -44,7 +44,7 @@ Appwright provides built-in fixtures like `device`, which offers methods to hand
 Here’s an example of how to write a basic test using the `device` fixture:
 
 ```ts
-import { test, expect } from 'appwright';
+import { test, expect } from '@samsara-dev/appwright';
 
 test('should display the login screen and tap on Login button', async ({ device }) => {
 
