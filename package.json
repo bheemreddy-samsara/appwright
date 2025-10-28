@@ -1,6 +1,6 @@
 {
   "name": "appwright",
-  "version": "0.1.46",
+  "version": "0.2.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
