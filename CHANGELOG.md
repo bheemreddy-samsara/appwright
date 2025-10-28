@@ -1,5 +1,11 @@
 # appwright
 
+## 0.2.0
+
+### Minor Changes
+
+- 3730adf: Upgrade to Appium v3.1, update bundled iOS driver support, bump the minimum Node.js runtime to 20.19.0, and let BrowserStack/LambdaTest configs request their Appium server version.
+
 ## 0.1.46
 
 ### Patch Changes
