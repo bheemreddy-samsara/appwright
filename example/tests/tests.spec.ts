@@ -1,4 +1,4 @@
-import { test, expect } from "appwright";
+import { test, expect } from "@samsara-dev/appwright";
 
 test("Open Playwright on Wikipedia and verify Microsoft is visible", async ({
   device,

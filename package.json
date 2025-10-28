@@ -1,5 +1,5 @@
 {
-  "name": "appwright",
+  "name": "@samsara-dev/appwright",
   "version": "0.2.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -23,7 +23,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/empirical-run/appwright.git"
+    "url": "git+https://github.com/bheemreddy-samsara/appwright.git"
   },
   "keywords": [
     "e2e",
@@ -32,7 +32,7 @@
     "android",
     "testing"
   ],
-  "author": "Empirical Team <hey@empirical.run>",
+  "author": "bheem.reddy@samsara.com",
   "license": "Apache-2.0",
   "description": "E2E mobile app testing done right, with the Playwright test runner",
   "dependencies": {

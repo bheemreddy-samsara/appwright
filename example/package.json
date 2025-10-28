@@ -12,6 +12,6 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "appwright": "^0.1.1"
+    "@samsara-dev/appwright": "^0.2.0"
   }
 }

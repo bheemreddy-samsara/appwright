@@ -1,6 +1,6 @@
 # Appwright
 
-![NPM Version](https://img.shields.io/npm/v/appwright?color=4AC61C)
+![NPM Version](https://img.shields.io/npm/v/@samsara-dev/appwright?color=4AC61C)
 
 Appwright is a test framework for e2e testing of mobile apps. Appwright builds on top of [Appium](https://appium.io/docs/en/latest/), and can
 run tests on local devices, emulators, and remote device farms — for both iOS and Android.
@@ -13,7 +13,7 @@ Appwright exposes an ergonomic API to automate user actions. These actions auto-
 for UI elements to be ready and interactable, which makes your tests easier to read and maintain.
 
 ```ts
-import { test, expect } from "appwright";
+import { test, expect } from "@samsara-dev/appwright";
 
 test("User can login", async ({ device }) => {
   await device.getByText("Username").fill("admin");
@@ -37,7 +37,7 @@ Links to help you get started.
 ### Install
 
 ```sh
-npm i --save-dev appwright
+npm i --save-dev @samsara-dev/appwright
 touch appwright.config.ts
 ```
 
@@ -45,7 +45,7 @@ touch appwright.config.ts
 
 ```ts
 // In appwright.config.ts
-import { defineConfig, Platform } from "appwright";
+import { defineConfig, Platform } from "@samsara-dev/appwright";
 export default defineConfig({
   projects: [
     {

@@ -1,4 +1,4 @@
-import { defineConfig, Platform } from "appwright";
+import { defineConfig, Platform } from "@samsara-dev/appwright";
 import path from "path";
 
 export default defineConfig({
