@@ -186,6 +186,8 @@ export enum DeviceOrientation {
 export enum ScrollDirection {
   UP = "up",
   DOWN = "down",
+  LEFT = "left",
+  RIGHT = "right",
 }
 
 export interface AppwrightLocator {
