@@ -5,6 +5,7 @@ import {
   DeviceProvider,
   ActionOptions,
   AppwrightConfig,
+  VisualTraceConfig,
 } from "../types";
 import { Device } from "../device";
 import { createDeviceProvider } from "../providers";
@@ -48,6 +49,11 @@ export const test = base.extend<TestLevelFixtures, WorkerLevelFixtures>({
       type: "sessionId",
       description: deviceProvider.sessionId,
     });
+
+    // Initialize Visual Trace Service for screenshot capture
+    const visualTraceConfig = (testInfo.project as FullProject<AppwrightConfig & { visualTrace?: VisualTraceConfig }>).use.visualTrace;
+    device.initializeVisualTrace(testInfo, testInfo.retry, visualTraceConfig);
+
     await deviceProvider.syncTestDetails?.({ name: testInfo.title });
     await use(device);
     await device.close();
