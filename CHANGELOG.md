@@ -1,5 +1,11 @@
 # appwright
 
+## 0.2.1
+
+### Patch Changes
+
+- 493ddf8: Add horizontal scroll directions (left/right) to ScrollDirection enum and update documentation with examples
+
 ## 0.2.0
 
 ### Minor Changes
