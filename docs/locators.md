@@ -92,8 +92,14 @@ const isVisible = await device.getByText('Playwright').isVisible();
 
 ## Scroll screen
 
-To scroll the screen, you can use the `scroll` method.
+To scroll the screen, you can use the `scroll` method with any of the four directions: up, down, left, or right.
 
 ```ts
+// Vertical scrolling
 await device.getByText("Playwright").scroll(ScrollDirection.DOWN);
+await device.getByText("Playwright").scroll(ScrollDirection.UP);
+
+// Horizontal scrolling
+await device.getByText("Playwright").scroll(ScrollDirection.LEFT);
+await device.getByText("Playwright").scroll(ScrollDirection.RIGHT);
 ```
