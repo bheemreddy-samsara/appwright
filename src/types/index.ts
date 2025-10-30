@@ -53,6 +53,32 @@ export type AppwrightConfig = {
   expectTimeout: number;
 };
 
+/**
+ * Configuration for Visual Trace screenshot capture
+ */
+export type VisualTraceConfig = {
+  /**
+   * Controls when screenshots are captured:
+   * - true | 'on': Always capture screenshots
+   * - false | 'off': Never capture screenshots
+   * - 'retain-on-failure': Only capture screenshots when tests fail (default)
+   */
+  enableScreenshots?: boolean | "on" | "off" | "retain-on-failure";
+
+  /**
+   * Maximum number of screenshots to capture per test.
+   * Default: 50
+   */
+  maxScreenshots?: number;
+
+  /**
+   * Whether to deduplicate screenshots based on content hash.
+   * Prevents capturing identical screenshots multiple times.
+   * Default: true
+   */
+  dedupe?: boolean;
+};
+
 export type DeviceConfig =
   | BrowserStackConfig
   | LambdaTestConfig

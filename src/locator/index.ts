@@ -12,6 +12,9 @@ import { boxedStep } from "../utils";
 import { RetryableError, TimeoutError } from "../types/errors";
 
 export class Locator {
+  // Store reference to the device for Visual Trace Service
+  private device?: { takeScreenshot: () => Promise<Buffer> };
+
   constructor(
     private webDriverClient: WebDriverClient,
     private timeoutOpts: TimeoutOptions,
@@ -20,7 +23,10 @@ export class Locator {
     private findStrategy: string,
     // Used to filter elements received from Appium server
     private textToMatch?: string | RegExp,
-  ) {}
+    device?: { takeScreenshot: () => Promise<Buffer> },
+  ) {
+    this.device = device;
+  }
 
   @boxedStep
   async fill(value: string, options?: ActionOptions): Promise<void> {

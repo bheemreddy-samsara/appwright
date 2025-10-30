@@ -6,6 +6,7 @@ import {
   ExtractType,
   Platform,
   TimeoutOptions,
+  VisualTraceConfig,
 } from "../types";
 import { AppwrightVision, VisionProvider } from "../vision";
 import { boxedStep, longestDeterministicGroup } from "../utils";
@@ -14,14 +15,45 @@ import { uploadImageToLambdaTest } from "../providers/lambdatest/utils";
 import { z } from "zod";
 import { LLMModel } from "@empiricalrun/llm";
 import { logger } from "../logger";
+import {
+  VisualTraceService,
+  initializeVisualTrace,
+  clearVisualTraceService,
+} from "../visualTrace";
+import { TestInfo } from "@playwright/test";
 
 export class Device {
+  private visualTraceService?: VisualTraceService;
+
   constructor(
     private webDriverClient: WebDriverClient,
     private bundleId: string | undefined,
     private timeoutOpts: TimeoutOptions,
     private provider: string,
   ) {}
+
+  /**
+   * Initialize Visual Trace Service for screenshot capture during test execution
+   */
+  initializeVisualTrace(
+    testInfo: TestInfo,
+    retryIndex: number,
+    config?: VisualTraceConfig,
+  ): void {
+    this.visualTraceService = initializeVisualTrace(
+      testInfo,
+      retryIndex,
+      config,
+    );
+  }
+
+  /**
+   * Take a screenshot - exposed for Visual Trace Service
+   */
+  async takeScreenshot(): Promise<Buffer> {
+    const base64Screenshot = await this.webDriverClient.takeScreenshot();
+    return Buffer.from(base64Screenshot, "base64");
+  }
 
   locator({
     selector,
@@ -38,6 +70,7 @@ export class Device {
       selector,
       findStrategy,
       textToMatch,
+      this, // Pass device reference for Visual Trace Service
     );
   }
 
@@ -89,6 +122,12 @@ export class Device {
       await this.webDriverClient.deleteSession();
     } catch (e) {
       logger.error(`close:`, e);
+    }
+
+    // Clean up visual trace service
+    if (this.visualTraceService) {
+      clearVisualTraceService();
+      this.visualTraceService = undefined;
     }
   }
 
