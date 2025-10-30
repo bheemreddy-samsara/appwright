@@ -124,25 +124,29 @@ export class VisualTraceService {
   }
 
   /**
-   * Check if we should skip this screenshot due to limits or deduplication
+   * Check if we've reached the screenshot limit
    */
-  private shouldSkipScreenshot(data?: Buffer): boolean {
+  private hasReachedLimit(): boolean {
     const state = this.getState();
+    return !!(this.config.maxScreenshots && state.screenshotCount >= this.config.maxScreenshots);
+  }
 
-    // Check max screenshot limit
-    if (this.config.maxScreenshots && state.screenshotCount >= this.config.maxScreenshots) {
+  /**
+   * Check if screenshot is a duplicate
+   */
+  private isDuplicate(data: Buffer): boolean {
+    if (!this.config.dedupe) {
+      return false;
+    }
+
+    const state = this.getState();
+    const hash = this.calculateHash(data);
+
+    if (state.dedupeHashes.has(hash)) {
       return true;
     }
 
-    // Check deduplication if enabled and data provided
-    if (this.config.dedupe && data) {
-      const hash = this.calculateHash(data);
-      if (state.dedupeHashes.has(hash)) {
-        return true;
-      }
-      state.dedupeHashes.add(hash);
-    }
-
+    state.dedupeHashes.add(hash);
     return false;
   }
 
@@ -158,12 +162,17 @@ export class VisualTraceService {
       return;
     }
 
+    // Check if we've reached the screenshot limit
+    if (this.hasReachedLimit()) {
+      return;
+    }
+
     try {
       // Take the screenshot
       const screenshotData = await takeScreenshot();
 
-      // Check if we should skip this screenshot
-      if (this.shouldSkipScreenshot(screenshotData)) {
+      // Check if this is a duplicate screenshot
+      if (this.isDuplicate(screenshotData)) {
         return;
       }
 

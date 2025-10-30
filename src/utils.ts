@@ -28,17 +28,19 @@ export function boxedStep(
     return test.step(
       name,
       async () => {
-        const result = await target.call(this, ...args);
-
-        // Capture screenshot after step execution if visual trace is enabled
-        const visualTrace = getVisualTraceService();
-        if (visualTrace && this.device?.takeScreenshot) {
-          await visualTrace.captureScreenshot(
-            () => this.device!.takeScreenshot(),
-            context.name as string
-          );
+        let result;
+        try {
+          result = await target.call(this, ...args);
+        } finally {
+          // Capture screenshot even if step throws an error
+          const visualTrace = getVisualTraceService();
+          if (visualTrace && this.device?.takeScreenshot) {
+            await visualTrace.captureScreenshot(
+              () => this.device!.takeScreenshot(),
+              context.name as string
+            );
+          }
         }
-
         return result;
       },
       { box: true },

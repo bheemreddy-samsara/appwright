@@ -1,4 +1,5 @@
-import { test, expect, TestInfo } from '@playwright/test';
+import { test, expect, describe, beforeEach, vi } from 'vitest';
+import { TestInfo } from '@playwright/test';
 import {
   VisualTraceService,
   initializeVisualTrace,
@@ -27,12 +28,12 @@ function createMockTestInfo(options: {
         screenshots: options.screenshots,
       },
     },
-    attach: jest.fn(),
+    attach: vi.fn(),
   } as unknown as TestInfo;
 }
 
 // Mock screenshot function
-const mockTakeScreenshot = jest.fn(() => Promise.resolve(Buffer.from('mock-screenshot-data')));
+const mockTakeScreenshot = vi.fn(() => Promise.resolve(Buffer.from('mock-screenshot-data')));
 
 describe('VisualTraceService', () => {
   beforeEach(() => {
@@ -186,10 +187,10 @@ describe('VisualTraceService', () => {
     test('should handle screenshot capture errors gracefully', async () => {
       const testInfo = createMockTestInfo({ trace: 'on' });
       const service = new VisualTraceService(testInfo, 0);
-      const errorTakeScreenshot = jest.fn(() => Promise.reject(new Error('Screenshot failed')));
+      const errorTakeScreenshot = vi.fn(() => Promise.reject(new Error('Screenshot failed')));
 
       // Mock console.warn to verify it's called
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation();
 
       await service.captureScreenshot(errorTakeScreenshot, 'test-step');
 
@@ -205,7 +206,7 @@ describe('VisualTraceService', () => {
   describe('Screenshot limits', () => {
     test('should respect max screenshot limit', async () => {
       const testInfo = createMockTestInfo({ trace: 'on' });
-      const service = new VisualTraceService(testInfo, 0, { maxScreenshots: 2 });
+      const service = new VisualTraceService(testInfo, 0, { maxScreenshots: 2, dedupe: false });
 
       // Capture first two screenshots
       await service.captureScreenshot(mockTakeScreenshot, 'step-1');
@@ -220,7 +221,7 @@ describe('VisualTraceService', () => {
 
     test('should track screenshot count correctly', async () => {
       const testInfo = createMockTestInfo({ trace: 'on' });
-      const service = new VisualTraceService(testInfo, 0);
+      const service = new VisualTraceService(testInfo, 0, { dedupe: false });
 
       expect(service.getScreenshotCount()).toBe(0);
 
@@ -239,7 +240,7 @@ describe('VisualTraceService', () => {
 
       // Same screenshot data
       const sameData = Buffer.from('same-screenshot');
-      const sameTakeScreenshot = jest.fn(() => Promise.resolve(sameData));
+      const sameTakeScreenshot = vi.fn(() => Promise.resolve(sameData));
 
       await service.captureScreenshot(sameTakeScreenshot, 'step-1');
       await service.captureScreenshot(sameTakeScreenshot, 'step-2');
@@ -254,7 +255,7 @@ describe('VisualTraceService', () => {
 
       // Same screenshot data
       const sameData = Buffer.from('same-screenshot');
-      const sameTakeScreenshot = jest.fn(() => Promise.resolve(sameData));
+      const sameTakeScreenshot = vi.fn(() => Promise.resolve(sameData));
 
       await service.captureScreenshot(sameTakeScreenshot, 'step-1');
       await service.captureScreenshot(sameTakeScreenshot, 'step-2');
