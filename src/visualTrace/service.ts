@@ -1,6 +1,6 @@
-import crypto from 'crypto';
-import { TestInfo } from '@playwright/test';
-import { VisualTraceConfig } from '../types';
+import crypto from "crypto";
+import { TestInfo } from "@playwright/test";
+import { VisualTraceConfig } from "../types";
 
 export interface VisualTraceState {
   screenshotCount: number;
@@ -13,13 +13,17 @@ export class VisualTraceService {
   private retryIndex: number;
   private config: VisualTraceConfig;
 
-  constructor(testInfo: TestInfo, retryIndex: number, config?: VisualTraceConfig) {
+  constructor(
+    testInfo: TestInfo,
+    retryIndex: number,
+    config?: VisualTraceConfig,
+  ) {
     this.testInfo = testInfo;
     this.retryIndex = retryIndex;
 
     // Default configuration: only capture on failure
     this.config = {
-      enableScreenshots: config?.enableScreenshots ?? 'retain-on-failure',
+      enableScreenshots: config?.enableScreenshots ?? "retain-on-failure",
       maxScreenshots: config?.maxScreenshots ?? 50,
       dedupe: config?.dedupe ?? true,
     };
@@ -46,7 +50,10 @@ export class VisualTraceService {
    */
   shouldCaptureScreenshot(stepFailed: boolean = false): boolean {
     // Check if screenshots are explicitly disabled
-    if (this.config.enableScreenshots === false || this.config.enableScreenshots === 'off') {
+    if (
+      this.config.enableScreenshots === false ||
+      this.config.enableScreenshots === "off"
+    ) {
       return false;
     }
 
@@ -60,25 +67,25 @@ export class VisualTraceService {
 
     // Map Playwright trace modes to screenshot behavior
     switch (traceMode) {
-      case 'on':
+      case "on":
         return true;
 
-      case 'retain-on-failure':
+      case "retain-on-failure":
         // Capture if step failed, test already failed, or we're in a retry
         return stepFailed || this.isTestFailing() || this.retryIndex > 0;
 
-      case 'on-first-retry':
+      case "on-first-retry":
         // Only capture on first retry
         return this.retryIndex === 1;
 
-      case 'on-all-retries':
+      case "on-all-retries":
         // Capture on all retries
         return this.retryIndex > 0;
 
-      case 'retry-with-trace':
+      case "retry-with-trace":
         return this.retryIndex > 0;
 
-      case 'off':
+      case "off":
         return false;
 
       default:
@@ -92,11 +99,11 @@ export class VisualTraceService {
   private checkConfigMode(stepFailed: boolean = false): boolean {
     const mode = this.config.enableScreenshots;
 
-    if (mode === true || mode === 'on') {
+    if (mode === true || mode === "on") {
       return true;
     }
 
-    if (mode === 'retain-on-failure') {
+    if (mode === "retain-on-failure") {
       // Capture if step failed or test is already failing
       return stepFailed || this.isTestFailing();
     }
@@ -109,7 +116,7 @@ export class VisualTraceService {
    */
   private isTestFailing(): boolean {
     // Check test status (will be 'failed', 'timedOut', etc. for failures)
-    if (this.testInfo.status && this.testInfo.status !== 'passed') {
+    if (this.testInfo.status && this.testInfo.status !== "passed") {
       return true;
     }
 
@@ -127,7 +134,7 @@ export class VisualTraceService {
    * Calculate hash for screenshot deduplication
    */
   private calculateHash(data: Buffer): string {
-    return crypto.createHash('sha256').update(data).digest('hex');
+    return crypto.createHash("sha256").update(data).digest("hex");
   }
 
   /**
@@ -135,7 +142,10 @@ export class VisualTraceService {
    */
   private hasReachedLimit(): boolean {
     const state = this.getState();
-    return !!(this.config.maxScreenshots && state.screenshotCount >= this.config.maxScreenshots);
+    return !!(
+      this.config.maxScreenshots &&
+      state.screenshotCount >= this.config.maxScreenshots
+    );
   }
 
   /**
@@ -163,7 +173,7 @@ export class VisualTraceService {
   async captureScreenshot(
     takeScreenshot: () => Promise<Buffer>,
     stepTitle?: string,
-    stepFailed: boolean = false
+    stepFailed: boolean = false,
   ): Promise<void> {
     // Check if we should capture screenshots
     if (!this.shouldCaptureScreenshot(stepFailed)) {
@@ -190,13 +200,15 @@ export class VisualTraceService {
 
       // Generate filename with step title if provided
       const timestamp = Date.now();
-      const stepSuffix = stepTitle ? `-${stepTitle.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
+      const stepSuffix = stepTitle
+        ? `-${stepTitle.replace(/[^a-zA-Z0-9]/g, "_")}`
+        : "";
       const filename = `screenshot-${timestamp}${stepSuffix}.png`;
 
       // Attach to test
       await this.testInfo.attach(filename, {
         body: screenshotData,
-        contentType: 'image/png',
+        contentType: "image/png",
       });
     } catch (error) {
       // Log error but don't fail the test
@@ -237,7 +249,7 @@ let serviceInstance: VisualTraceService | null = null;
 export function initializeVisualTrace(
   testInfo: TestInfo,
   retryIndex: number,
-  config?: VisualTraceConfig
+  config?: VisualTraceConfig,
 ): VisualTraceService {
   serviceInstance = new VisualTraceService(testInfo, retryIndex, config);
   return serviceInstance;

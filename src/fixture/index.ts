@@ -51,7 +51,11 @@ export const test = base.extend<TestLevelFixtures, WorkerLevelFixtures>({
     });
 
     // Initialize Visual Trace Service for screenshot capture
-    const visualTraceConfig = (testInfo.project as FullProject<AppwrightConfig & { visualTrace?: VisualTraceConfig }>).use.visualTrace;
+    const visualTraceConfig = (
+      testInfo.project as FullProject<
+        AppwrightConfig & { visualTrace?: VisualTraceConfig }
+      >
+    ).use.visualTrace;
     device.initializeVisualTrace(testInfo, testInfo.retry, visualTraceConfig);
 
     await deviceProvider.syncTestDetails?.({ name: testInfo.title });

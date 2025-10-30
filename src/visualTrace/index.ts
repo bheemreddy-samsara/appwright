@@ -3,6 +3,6 @@ export {
   initializeVisualTrace,
   getVisualTraceService,
   clearVisualTraceService,
-} from './service';
+} from "./service";
 
-export type { VisualTraceState } from './service';
+export type { VisualTraceState } from "./service";

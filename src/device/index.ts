@@ -15,7 +15,11 @@ import { uploadImageToLambdaTest } from "../providers/lambdatest/utils";
 import { z } from "zod";
 import { LLMModel } from "@empiricalrun/llm";
 import { logger } from "../logger";
-import { VisualTraceService, initializeVisualTrace, clearVisualTraceService } from "../visualTrace";
+import {
+  VisualTraceService,
+  initializeVisualTrace,
+  clearVisualTraceService,
+} from "../visualTrace";
 import { TestInfo } from "@playwright/test";
 
 export class Device {
@@ -31,8 +35,16 @@ export class Device {
   /**
    * Initialize Visual Trace Service for screenshot capture during test execution
    */
-  initializeVisualTrace(testInfo: TestInfo, retryIndex: number, config?: VisualTraceConfig): void {
-    this.visualTraceService = initializeVisualTrace(testInfo, retryIndex, config);
+  initializeVisualTrace(
+    testInfo: TestInfo,
+    retryIndex: number,
+    config?: VisualTraceConfig,
+  ): void {
+    this.visualTraceService = initializeVisualTrace(
+      testInfo,
+      retryIndex,
+      config,
+    );
   }
 
   /**
@@ -40,7 +52,7 @@ export class Device {
    */
   async takeScreenshot(): Promise<Buffer> {
     const base64Screenshot = await this.webDriverClient.takeScreenshot();
-    return Buffer.from(base64Screenshot, 'base64');
+    return Buffer.from(base64Screenshot, "base64");
   }
 
   locator({

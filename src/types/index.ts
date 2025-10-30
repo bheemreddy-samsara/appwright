@@ -63,7 +63,7 @@ export type VisualTraceConfig = {
    * - false | 'off': Never capture screenshots
    * - 'retain-on-failure': Only capture screenshots when tests fail (default)
    */
-  enableScreenshots?: boolean | 'on' | 'off' | 'retain-on-failure';
+  enableScreenshots?: boolean | "on" | "off" | "retain-on-failure";
 
   /**
    * Maximum number of screenshots to capture per test.
