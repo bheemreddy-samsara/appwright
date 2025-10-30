@@ -12,8 +12,18 @@ export function boxedStep(
       selector?: string | RegExp;
       device?: {
         takeScreenshot: () => Promise<Buffer>;
+        initializeVisualTrace?: (
+          testInfo: any,
+          retryIndex: number,
+          config?: any,
+        ) => void;
       };
       takeScreenshot?: () => Promise<Buffer>;
+      initializeVisualTrace?: (
+        testInfo: any,
+        retryIndex: number,
+        config?: any,
+      ) => void;
     },
     ...args: any
   ) {
@@ -38,7 +48,30 @@ export function boxedStep(
           throw error; // Re-throw to preserve test failure
         } finally {
           // Capture screenshot even if step throws an error
-          const visualTrace = getVisualTraceService();
+          let visualTrace = getVisualTraceService();
+
+          // If Visual Trace is not initialized (e.g., for persistentDevice),
+          // initialize it lazily using current test info
+          if (!visualTrace && test.info) {
+            try {
+              const testInfo = test.info();
+              const device = this.device || this;
+              if (device?.initializeVisualTrace && testInfo) {
+                // Get visual trace config from project
+                const visualTraceConfig = (testInfo.project as any)?.use
+                  ?.visualTrace;
+                device.initializeVisualTrace(
+                  testInfo,
+                  testInfo.retry,
+                  visualTraceConfig,
+                );
+                visualTrace = getVisualTraceService();
+              }
+            } catch (e) {
+              // test.info() might not be available in some contexts
+            }
+          }
+
           // For Device methods, 'this' is the Device instance
           // For Locator methods, 'this.device' is the Device instance
           const takeScreenshot =

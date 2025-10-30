@@ -85,6 +85,10 @@ export const test = base.extend<TestLevelFixtures, WorkerLevelFixtures>({
       }
       const providerName = (project as FullProject<AppwrightConfig>).use.device
         ?.provider;
+
+      // Note: For persistentDevice, Visual Trace is initialized lazily in boxedStep
+      // when test.info() is available, ensuring it works for worker-scoped fixtures.
+
       const afterSession = new Date();
       const workerInfoStore = new WorkerInfoStore();
       await workerInfoStore.saveWorkerStartTime(
