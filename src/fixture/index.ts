@@ -5,6 +5,7 @@ import {
   DeviceProvider,
   ActionOptions,
   AppwrightConfig,
+  VisualTraceConfig,
 } from "../types";
 import { Device } from "../device";
 import { createDeviceProvider } from "../providers";
@@ -48,6 +49,15 @@ export const test = base.extend<TestLevelFixtures, WorkerLevelFixtures>({
       type: "sessionId",
       description: deviceProvider.sessionId,
     });
+
+    // Initialize Visual Trace Service for screenshot capture
+    const visualTraceConfig = (
+      testInfo.project as FullProject<
+        AppwrightConfig & { visualTrace?: VisualTraceConfig }
+      >
+    ).use.visualTrace;
+    device.initializeVisualTrace(testInfo, testInfo.retry, visualTraceConfig);
+
     await deviceProvider.syncTestDetails?.({ name: testInfo.title });
     await use(device);
     await device.close();
@@ -75,6 +85,10 @@ export const test = base.extend<TestLevelFixtures, WorkerLevelFixtures>({
       }
       const providerName = (project as FullProject<AppwrightConfig>).use.device
         ?.provider;
+
+      // Note: For persistentDevice, Visual Trace is initialized lazily in boxedStep
+      // when test.info() is available, ensuring it works for worker-scoped fixtures.
+
       const afterSession = new Date();
       const workerInfoStore = new WorkerInfoStore();
       await workerInfoStore.saveWorkerStartTime(

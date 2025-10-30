@@ -1,6 +1,10 @@
-import test from "@playwright/test";
+import test, { TestInfo } from "@playwright/test";
 import fs from "fs";
 import path from "path";
+import {
+  getVisualTraceService,
+  needsVisualTraceReinitialization,
+} from "./visualTrace";
 
 export function boxedStep(
   target: Function,
@@ -8,7 +12,21 @@ export function boxedStep(
 ) {
   return function replacementMethod(
     this: {
-      selector: string | RegExp;
+      selector?: string | RegExp;
+      device?: {
+        takeScreenshot: () => Promise<Buffer>;
+        initializeVisualTrace?: (
+          testInfo: any,
+          retryIndex: number,
+          config?: any,
+        ) => void;
+      };
+      takeScreenshot?: () => Promise<Buffer>;
+      initializeVisualTrace?: (
+        testInfo: any,
+        retryIndex: number,
+        config?: any,
+      ) => void;
     },
     ...args: any
   ) {
@@ -24,7 +42,60 @@ export function boxedStep(
     return test.step(
       name,
       async () => {
-        return await target.call(this, ...args);
+        let result;
+        let stepFailed = false;
+        try {
+          result = await target.call(this, ...args);
+        } catch (error) {
+          stepFailed = true;
+          throw error; // Re-throw to preserve test failure
+        } finally {
+          // Capture screenshot even if step throws an error
+          let visualTrace = getVisualTraceService();
+
+          // Check if we need to reinitialize for a new test (important for persistentDevice)
+          if (test.info) {
+            try {
+              const testInfo = test.info();
+              const device = this.device || this;
+
+              // Initialize or reinitialize if needed
+              if (device?.initializeVisualTrace && testInfo) {
+                const needsInit = needsVisualTraceReinitialization(
+                  testInfo.testId,
+                  testInfo.retry,
+                );
+
+                if (needsInit) {
+                  // Get visual trace config from project
+                  const visualTraceConfig = (testInfo.project as any)?.use
+                    ?.visualTrace;
+                  device.initializeVisualTrace(
+                    testInfo,
+                    testInfo.retry,
+                    visualTraceConfig,
+                  );
+                  visualTrace = getVisualTraceService();
+                }
+              }
+            } catch (e) {
+              // test.info() might not be available in some contexts
+            }
+          }
+
+          // For Device methods, 'this' is the Device instance
+          // For Locator methods, 'this.device' is the Device instance
+          const takeScreenshot =
+            this.device?.takeScreenshot || this.takeScreenshot;
+          if (visualTrace && takeScreenshot) {
+            await visualTrace.captureScreenshot(
+              () => takeScreenshot.call(this.device || this),
+              context.name as string,
+              stepFailed,
+            );
+          }
+        }
+        return result;
       },
       { box: true },
     );
@@ -88,4 +159,56 @@ export function longestDeterministicGroup(pattern: RegExp): string | undefined {
 
 export function basePath() {
   return path.join(process.cwd(), "playwright-report", "data", "videos-store");
+}
+
+/**
+ * Check if tracing is enabled for the current test based on Playwright's trace configuration
+ */
+export function isTracingEnabled(
+  testInfo: TestInfo,
+  retryIndex: number,
+): boolean {
+  const traceMode = testInfo.project.use?.trace;
+
+  if (!traceMode || traceMode === "off") {
+    return false;
+  }
+
+  if (traceMode === "on") {
+    return true;
+  }
+
+  if (traceMode === "retain-on-failure") {
+    // Tracing is enabled if the test has failed
+    return testInfo.status !== undefined && testInfo.status !== "passed";
+  }
+
+  if (traceMode === "on-first-retry") {
+    // Tracing is enabled on the first retry only
+    return retryIndex === 1;
+  }
+
+  if (traceMode === "on-all-retries" || traceMode === "retry-with-trace") {
+    // Tracing is enabled on all retries
+    return retryIndex > 0;
+  }
+
+  return false;
+}
+
+/**
+ * Determine if screenshots should be captured based on trace mode
+ */
+export function shouldCaptureScreenshotsFromTrace(
+  testInfo: TestInfo,
+  retryIndex: number,
+): boolean {
+  // Check if screenshots are explicitly disabled in project config
+  const screenshotsConfig = testInfo.project.use?.screenshot;
+  if (screenshotsConfig === "off") {
+    return false;
+  }
+
+  // Use trace configuration to determine screenshot behavior
+  return isTracingEnabled(testInfo, retryIndex);
 }
