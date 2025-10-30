@@ -125,6 +125,42 @@ describe("VisualTraceService", () => {
       expect(service.shouldCaptureScreenshot(true)).toBe(true); // stepFailed = true
     });
 
+    test('should handle object trace configuration with mode "on"', () => {
+      const testInfo = {
+        testId: "test-1",
+        retry: 0,
+        status: undefined,
+        errors: [],
+        project: {
+          use: {
+            trace: { mode: "on", screenshots: true },
+          },
+        },
+        attach: vi.fn(),
+      } as unknown as TestInfo;
+      const service = new VisualTraceService(testInfo, 0);
+
+      expect(service.shouldCaptureScreenshot()).toBe(true);
+    });
+
+    test("should respect screenshots: false in object trace config", () => {
+      const testInfo = {
+        testId: "test-1",
+        retry: 0,
+        status: undefined,
+        errors: [],
+        project: {
+          use: {
+            trace: { mode: "on", screenshots: false },
+          },
+        },
+        attach: vi.fn(),
+      } as unknown as TestInfo;
+      const service = new VisualTraceService(testInfo, 0);
+
+      expect(service.shouldCaptureScreenshot()).toBe(false);
+    });
+
     test('should return true on retry with "on-first-retry"', () => {
       const testInfo = createMockTestInfo({ trace: "on-first-retry" });
       const service = new VisualTraceService(testInfo, 1);

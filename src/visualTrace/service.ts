@@ -58,10 +58,26 @@ export class VisualTraceService {
     }
 
     // Get trace configuration from Playwright
-    const traceMode = this.testInfo.project.use?.trace;
+    const traceConfig = this.testInfo.project.use?.trace;
 
     // If no trace mode is set, use our config
-    if (!traceMode) {
+    if (!traceConfig) {
+      return this.checkConfigMode(stepFailed);
+    }
+
+    // Handle both string and object trace configurations
+    let traceMode: string;
+    if (typeof traceConfig === "string") {
+      traceMode = traceConfig;
+    } else if (typeof traceConfig === "object" && traceConfig.mode) {
+      // Handle object configuration like { mode: 'on', screenshots: true }
+      traceMode = traceConfig.mode;
+      // If screenshots are explicitly disabled in trace config, respect that
+      if (traceConfig.screenshots === false) {
+        return false;
+      }
+    } else {
+      // Unknown format, fall back to our config
       return this.checkConfigMode(stepFailed);
     }
 
