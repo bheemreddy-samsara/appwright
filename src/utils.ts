@@ -1,7 +1,10 @@
 import test, { TestInfo } from "@playwright/test";
 import fs from "fs";
 import path from "path";
-import { getVisualTraceService } from "./visualTrace";
+import {
+  getVisualTraceService,
+  needsVisualTraceReinitialization,
+} from "./visualTrace";
 
 export function boxedStep(
   target: Function,
@@ -50,22 +53,30 @@ export function boxedStep(
           // Capture screenshot even if step throws an error
           let visualTrace = getVisualTraceService();
 
-          // If Visual Trace is not initialized (e.g., for persistentDevice),
-          // initialize it lazily using current test info
-          if (!visualTrace && test.info) {
+          // Check if we need to reinitialize for a new test (important for persistentDevice)
+          if (test.info) {
             try {
               const testInfo = test.info();
               const device = this.device || this;
+
+              // Initialize or reinitialize if needed
               if (device?.initializeVisualTrace && testInfo) {
-                // Get visual trace config from project
-                const visualTraceConfig = (testInfo.project as any)?.use
-                  ?.visualTrace;
-                device.initializeVisualTrace(
-                  testInfo,
+                const needsInit = needsVisualTraceReinitialization(
+                  testInfo.testId,
                   testInfo.retry,
-                  visualTraceConfig,
                 );
-                visualTrace = getVisualTraceService();
+
+                if (needsInit) {
+                  // Get visual trace config from project
+                  const visualTraceConfig = (testInfo.project as any)?.use
+                    ?.visualTrace;
+                  device.initializeVisualTrace(
+                    testInfo,
+                    testInfo.retry,
+                    visualTraceConfig,
+                  );
+                  visualTrace = getVisualTraceService();
+                }
               }
             } catch (e) {
               // test.info() might not be available in some contexts

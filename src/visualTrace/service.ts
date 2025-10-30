@@ -10,8 +10,9 @@ export interface VisualTraceState {
 export class VisualTraceService {
   private states = new Map<string, VisualTraceState>();
   private testInfo: TestInfo;
-  private retryIndex: number;
+  public readonly retryIndex: number;
   private config: VisualTraceConfig;
+  public readonly testId: string;
 
   constructor(
     testInfo: TestInfo,
@@ -20,6 +21,7 @@ export class VisualTraceService {
   ) {
     this.testInfo = testInfo;
     this.retryIndex = retryIndex;
+    this.testId = testInfo.testId;
 
     // Default configuration: only capture on failure
     this.config = {
@@ -276,6 +278,23 @@ export function initializeVisualTrace(
  */
 export function getVisualTraceService(): VisualTraceService | null {
   return serviceInstance;
+}
+
+/**
+ * Check if the Visual Trace Service needs reinitialization for a different test
+ */
+export function needsVisualTraceReinitialization(
+  testId: string,
+  retryIndex: number,
+): boolean {
+  if (!serviceInstance) {
+    return true;
+  }
+  // Reinitialize if it's a different test or retry
+  return (
+    serviceInstance.testId !== testId ||
+    serviceInstance.retryIndex !== retryIndex
+  );
 }
 
 /**
