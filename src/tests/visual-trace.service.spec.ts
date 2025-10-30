@@ -111,6 +111,16 @@ describe('VisualTraceService', () => {
       expect(service.shouldCaptureScreenshot()).toBe(false);
     });
 
+    test('should return true when step fails with "retain-on-failure"', () => {
+      const testInfo = createMockTestInfo({
+        trace: 'retain-on-failure',
+        status: undefined // Status not set during execution
+      });
+      const service = new VisualTraceService(testInfo, 0);
+
+      expect(service.shouldCaptureScreenshot(true)).toBe(true); // stepFailed = true
+    });
+
     test('should return true on retry with "on-first-retry"', () => {
       const testInfo = createMockTestInfo({ trace: 'on-first-retry' });
       const service = new VisualTraceService(testInfo, 1);
@@ -180,7 +190,10 @@ describe('VisualTraceService', () => {
 
       expect(testInfo.attach).toHaveBeenCalledWith(
         expect.stringContaining('click_submit'),
-        expect.any(Object)
+        expect.objectContaining({
+          body: expect.any(Buffer),
+          contentType: 'image/png',
+        })
       );
     });
 
@@ -190,7 +203,7 @@ describe('VisualTraceService', () => {
       const errorTakeScreenshot = vi.fn(() => Promise.reject(new Error('Screenshot failed')));
 
       // Mock console.warn to verify it's called
-      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation();
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       await service.captureScreenshot(errorTakeScreenshot, 'test-step');
 

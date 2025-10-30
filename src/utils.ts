@@ -29,15 +29,20 @@ export function boxedStep(
       name,
       async () => {
         let result;
+        let stepFailed = false;
         try {
           result = await target.call(this, ...args);
+        } catch (error) {
+          stepFailed = true;
+          throw error; // Re-throw to preserve test failure
         } finally {
           // Capture screenshot even if step throws an error
           const visualTrace = getVisualTraceService();
           if (visualTrace && this.device?.takeScreenshot) {
             await visualTrace.captureScreenshot(
               () => this.device!.takeScreenshot(),
-              context.name as string
+              context.name as string,
+              stepFailed
             );
           }
         }
@@ -144,8 +149,8 @@ export function isTracingEnabled(testInfo: TestInfo, retryIndex: number): boolea
  */
 export function shouldCaptureScreenshotsFromTrace(testInfo: TestInfo, retryIndex: number): boolean {
   // Check if screenshots are explicitly disabled in project config
-  const screenshotsConfig = testInfo.project.use?.screenshots;
-  if (screenshotsConfig === false || screenshotsConfig === 'off') {
+  const screenshotsConfig = testInfo.project.use?.screenshot;
+  if (screenshotsConfig === 'off') {
     return false;
   }
 

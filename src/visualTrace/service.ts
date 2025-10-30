@@ -44,7 +44,7 @@ export class VisualTraceService {
   /**
    * Check if screenshots should be captured based on trace mode and test status
    */
-  shouldCaptureScreenshot(): boolean {
+  shouldCaptureScreenshot(stepFailed: boolean = false): boolean {
     // Check if screenshots are explicitly disabled
     if (this.config.enableScreenshots === false || this.config.enableScreenshots === 'off') {
       return false;
@@ -55,7 +55,7 @@ export class VisualTraceService {
 
     // If no trace mode is set, use our config
     if (!traceMode) {
-      return this.checkConfigMode();
+      return this.checkConfigMode(stepFailed);
     }
 
     // Map Playwright trace modes to screenshot behavior
@@ -64,10 +64,16 @@ export class VisualTraceService {
         return true;
 
       case 'retain-on-failure':
+        // Capture if step failed, test already failed, or we're in a retry
+        return stepFailed || this.isTestFailing() || this.retryIndex > 0;
+
       case 'on-first-retry':
+        // Only capture on first retry
+        return this.retryIndex === 1;
+
       case 'on-all-retries':
-        // These modes should capture when test is failing or in retry
-        return this.isTestFailing() || this.retryIndex > 0;
+        // Capture on all retries
+        return this.retryIndex > 0;
 
       case 'retry-with-trace':
         return this.retryIndex > 0;
@@ -76,14 +82,14 @@ export class VisualTraceService {
         return false;
 
       default:
-        return this.checkConfigMode();
+        return this.checkConfigMode(stepFailed);
     }
   }
 
   /**
    * Check our own config mode for screenshot capture
    */
-  private checkConfigMode(): boolean {
+  private checkConfigMode(stepFailed: boolean = false): boolean {
     const mode = this.config.enableScreenshots;
 
     if (mode === true || mode === 'on') {
@@ -91,7 +97,8 @@ export class VisualTraceService {
     }
 
     if (mode === 'retain-on-failure') {
-      return this.isTestFailing();
+      // Capture if step failed or test is already failing
+      return stepFailed || this.isTestFailing();
     }
 
     return false;
@@ -155,10 +162,11 @@ export class VisualTraceService {
    */
   async captureScreenshot(
     takeScreenshot: () => Promise<Buffer>,
-    stepTitle?: string
+    stepTitle?: string,
+    stepFailed: boolean = false
   ): Promise<void> {
     // Check if we should capture screenshots
-    if (!this.shouldCaptureScreenshot()) {
+    if (!this.shouldCaptureScreenshot(stepFailed)) {
       return;
     }
 
