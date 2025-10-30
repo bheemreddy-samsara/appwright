@@ -41,7 +41,8 @@ export function boxedStep(
           const visualTrace = getVisualTraceService();
           // For Device methods, 'this' is the Device instance
           // For Locator methods, 'this.device' is the Device instance
-          const takeScreenshot = this.device?.takeScreenshot || this.takeScreenshot;
+          const takeScreenshot =
+            this.device?.takeScreenshot || this.takeScreenshot;
           if (visualTrace && takeScreenshot) {
             await visualTrace.captureScreenshot(
               () => takeScreenshot.call(this.device || this),
