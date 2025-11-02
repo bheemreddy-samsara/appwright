@@ -1,5 +1,11 @@
 # appwright
 
+## 0.3.1
+
+### Patch Changes
+
+- eb38761: Add `device.backgroundApp()` to delegate to Appium's `mobile: backgroundApp` command.
+
 ## 0.3.0
 
 ### Minor Changes
