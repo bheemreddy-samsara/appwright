@@ -90,7 +90,8 @@ Follow the steps mentioned in ${androidSimulatorConfigDocLink} to run test on An
 
   private async createConfig() {
     const platformName = this.project.use.platform;
-    const udid = (this.project.use.device as EmulatorConfig).udid;
+    const deviceConfig = this.project.use.device as EmulatorConfig;
+    const udid = deviceConfig.udid;
     let appPackageName: string | undefined;
     let appLaunchableActivity: string | undefined;
 
@@ -104,12 +105,11 @@ Follow the steps mentioned in ${androidSimulatorConfigDocLink} to run test on An
     return {
       port: 4723,
       capabilities: {
-        "appium:deviceName": this.project.use.device?.name,
+        "appium:deviceName": deviceConfig.name,
         "appium:udid": udid,
         "appium:automationName":
           platformName == Platform.ANDROID ? "uiautomator2" : "xcuitest",
-        "appium:platformVersion": (this.project.use.device as EmulatorConfig)
-          .osVersion,
+        "appium:platformVersion": deviceConfig.osVersion,
         "appium:appActivity": appLaunchableActivity,
         "appium:appPackage": appPackageName,
         platformName: platformName,
@@ -117,7 +117,7 @@ Follow the steps mentioned in ${androidSimulatorConfigDocLink} to run test on An
         "appium:app": this.project.use.buildPath,
         "appium:autoAcceptAlerts": true,
         "appium:fullReset": true,
-        "appium:deviceOrientation": this.project.use.device?.orientation,
+        "appium:deviceOrientation": deviceConfig.orientation,
         "appium:settings[snapshotMaxDepth]": 62,
         "appium:wdaLaunchTimeout": 300_000,
       },
