@@ -275,6 +275,31 @@ export class Device {
   }
 
   /**
+   * Sends the currently running app to the background.
+   *
+   * @param seconds - Number of seconds to keep app in background.
+   *                  Use -1 to background indefinitely (until manually reactivated).
+   *                  If positive number, app returns to foreground after specified seconds.
+   *
+   * @example
+   * ```js
+   * // Background for 10 seconds then auto-return
+   * await device.backgroundApp(10);
+   *
+   * // Background indefinitely (for battery tests)
+   * await device.backgroundApp(-1);
+   * await device.pause(30 * 60 * 1000); // Wait 30 minutes
+   * await device.activateApp(); // Manually bring back
+   * ```
+   */
+  @boxedStep
+  async backgroundApp(seconds: number = -1): Promise<void> {
+    await this.webDriverClient.executeScript("mobile: backgroundApp", [
+      seconds,
+    ]);
+  }
+
+  /**
    * Retrieves text content from the clipboard of the mobile device. This is useful
    * after a "copy to clipboard" action has been performed. This returns base64 encoded string.
    *
