@@ -77,7 +77,7 @@ export default defineConfig({
 - `platform`: The platform you want to test on, such as 'android' or 'ios'.
 
 - `provider`: The device provider where you want to run your tests.
-              You can choose between `browserstack`, `lambdatest`, `emulator`, or `local-device`.
+              You can choose between `browserstack`, `lambdatest`, `emulator`, `local-device`, or `aws-device-farm`.
 
 - `buildPath`: The path to your build file. For Android, it should be an APK file.
                For iOS, if you are running tests on real device, it should be an `.ipa` file. For running tests on an emulator, it should be a `.app` file.
@@ -169,6 +169,33 @@ the provider in your config.
   },
 },
 ```
+
+#### Run tests on AWS Device Farm
+
+Appwright can connect to AWS Device Farm remote access sessions. Configure the provider in your config and supply either a Device Farm `appArn` or a local `buildPath` that Appwright can upload during global setup.
+
+```ts
+{
+  name: "ios",
+  use: {
+    platform: Platform.IOS,
+    appBundleId: "com.example.myapp",
+    buildPath: "./builds/MyApp.ipa",
+    device: {
+      provider: "aws-device-farm",
+      projectArn: "arn:aws:devicefarm:us-west-2:123456789012:project:abc123",
+      deviceArn:
+        "arn:aws:devicefarm:us-west-2::device:Apple:iPhone.15.Pro:17.5",
+      interactionMode: "VIDEO_ONLY",
+      sessionName: "smoke-suite",
+    },
+  },
+},
+```
+
+Set the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and (optionally) `AWS_SESSION_TOKEN` & `AWS_REGION` environment variables before running the tests.
+
+Appwright will request Device Farm video recordings by default (`remoteRecordEnabled: true`) and attach the MP4 to Playwright reports once the session completes.
 
 ## Run the sample project
 

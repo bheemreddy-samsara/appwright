@@ -1,4 +1,5 @@
 import { Device } from "../device";
+import type { CreateRemoteAccessSessionConfiguration } from "@aws-sdk/client-device-farm";
 import { z } from "zod";
 
 export type ExtractType<T> = T extends z.ZodType ? z.infer<T> : never;
@@ -83,7 +84,8 @@ export type DeviceConfig =
   | BrowserStackConfig
   | LambdaTestConfig
   | LocalDeviceConfig
-  | EmulatorConfig;
+  | EmulatorConfig
+  | AWSDeviceFarmConfig;
 
 /**
  * Configuration for devices running on Browserstack.
@@ -194,6 +196,63 @@ export type LambdaTestConfig = {
    * Default is false.
    */
   tunnel?: boolean;
+};
+
+export type AWSDeviceFarmInteractionMode =
+  | "INTERACTIVE"
+  | "NO_VIDEO"
+  | "VIDEO_ONLY";
+
+export type AWSDeviceFarmConfig = {
+  provider: "aws-device-farm";
+  /**
+   * ARN of the Device Farm project.
+   */
+  projectArn: string;
+  /**
+   * ARN of the device to target.
+   */
+  deviceArn: string;
+  /**
+   * Region to use when connecting to Device Farm. Defaults to us-west-2 if not provided.
+   */
+  region?: string;
+  /**
+   * Optional pre-uploaded application ARN. If omitted, Appwright will upload the build from `buildPath`.
+   */
+  appArn?: string;
+  /**
+   * When set, Device Farm records video for the remote session.
+   */
+  remoteRecordEnabled?: boolean;
+  /**
+   * Friendly name to apply to the remote session.
+   */
+  sessionName?: string;
+  /**
+   * Device Farm interaction mode to request. Defaults to VIDEO_ONLY.
+   */
+  interactionMode?: AWSDeviceFarmInteractionMode;
+  /**
+   * Forwarded to Device Farm's `configuration` field for advanced tuning.
+   */
+  configuration?: CreateRemoteAccessSessionConfiguration;
+  /**
+   * Skip resigning the uploaded application. Applies to private devices.
+   */
+  skipAppResign?: boolean;
+  /**
+   * Android package name of the application under test.
+   */
+  appPackage?: string;
+  /**
+   * Android launchable activity of the application under test.
+   */
+  appActivity?: string;
+  /**
+   * Any additional capabilities that should be merged into the Appium session.
+   */
+  additionalCapabilities?: Record<string, unknown>;
 };
 
 /**
