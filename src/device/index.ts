@@ -21,6 +21,7 @@ export class Device {
     private bundleId: string | undefined,
     private timeoutOpts: TimeoutOptions,
     private provider: string,
+    private cleanupCallback?: () => Promise<void>,
   ) {}
 
   locator({
@@ -89,6 +90,15 @@ export class Device {
       await this.webDriverClient.deleteSession();
     } catch (e) {
       logger.error(`close:`, e);
+    }
+
+    // Call the cleanup callback if provided
+    if (this.cleanupCallback) {
+      try {
+        await this.cleanupCallback();
+      } catch (e) {
+        logger.error(`cleanup callback error:`, e);
+      }
     }
   }
 

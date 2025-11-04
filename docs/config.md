@@ -12,6 +12,7 @@ providers are supported:
 - `emulator`
 - `browserstack`
 - `lambdatest`
+- `aws-device-farm`
 
 ### BrowserStack
 
@@ -36,6 +37,46 @@ These environment variables are required for the LambdaTest
 - LAMBDATEST_ACCESS_KEY
 
 LambdaTest also requires `name` and `osVersion` of the device to be set in the projects in appwright config file.
+
+### AWS Device Farm
+
+AWS Device Farm can provide remote iOS and Android devices using [remote access sessions](https://docs.aws.amazon.com/devicefarm/latest/developerguide/remote-access.html).
+
+Set these environment variables before running tests:
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_SESSION_TOKEN` (if you are using temporary credentials)
+- `AWS_REGION` (defaults to `us-west-2` if omitted)
+
+Sample configuration:
+
+```ts
+defineConfig({
+  projects: [
+    {
+      name: "ios-aws",
+      use: {
+        platform: "ios",
+        appBundleId: "com.example.myapp",
+        buildPath: "./build/MyApp.ipa",
+        device: {
+          provider: "aws-device-farm",
+          projectArn: "arn:aws:devicefarm:us-west-2:123456789012:project:abc123",
+          deviceArn:
+            "arn:aws:devicefarm:us-west-2::device:Apple:iPhone.15:16.4.1",
+          interactionMode: "VIDEO_ONLY",
+          sessionName: "e2e smoke",
+        },
+      },
+    },
+  ],
+});
+```
+
+If you already have an uploaded application in Device Farm, supply `appArn` to skip uploading the build during `globalSetup`. For Android tests, provide `appPackage` and `appActivity` when Device Farm should launch a specific activity. Any custom Appium capabilities can be added through `additionalCapabilities`.
+
+Video recordings are downloaded automatically when `remoteRecordEnabled` is `true` (the default). Set it to `false` if you prefer to skip video capture.
 
 ### Android Emulator
 

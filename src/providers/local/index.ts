@@ -81,6 +81,7 @@ export class LocalDeviceProvider implements DeviceProvider {
     const platformName = this.project.use.platform;
     let appPackageName: string | undefined;
     let appLaunchableActivity: string | undefined;
+    const deviceConfig = this.project.use.device as LocalDeviceConfig;
 
     if (platformName == Platform.ANDROID) {
       const { packageName, launchableActivity } = await getApkDetails(
@@ -89,7 +90,7 @@ export class LocalDeviceProvider implements DeviceProvider {
       appPackageName = packageName!;
       appLaunchableActivity = launchableActivity!;
     }
-    let udid = (this.project.use.device as LocalDeviceConfig).udid;
+    let udid = deviceConfig.udid;
     if (!udid) {
       if (platformName == Platform.IOS) {
         udid = await getConnectedIOSDeviceUDID();
@@ -106,7 +107,7 @@ To specify a device, use the udid property. Run "adb devices" to get the UDID fo
     return {
       port: 4723,
       capabilities: {
-        "appium:deviceName": this.project.use.device?.name,
+        "appium:deviceName": deviceConfig.name,
         "appium:udid": udid,
         "appium:automationName":
           platformName == Platform.ANDROID ? "uiautomator2" : "xcuitest",
@@ -117,7 +118,7 @@ To specify a device, use the udid property. Run "adb devices" to get the UDID fo
         "appium:appPackage": appPackageName,
         "appium:autoAcceptAlerts": true,
         "appium:fullReset": true,
-        "appium:deviceOrientation": this.project.use.device?.orientation,
+        "appium:deviceOrientation": deviceConfig.orientation,
         "appium:settings[snapshotMaxDepth]": 62,
       },
     };

@@ -280,14 +280,15 @@ export class LambdaTestDeviceProvider implements DeviceProvider {
   }
 
   private deviceInfoForSession() {
-    let deviceName = this.project.use.device?.name;
-    let osVersion = (this.project.use.device as LambdaTestConfig).osVersion;
+    const deviceConfig = this.project.use.device as LambdaTestConfig;
+    let deviceName = deviceConfig.name;
+    let osVersion = deviceConfig.osVersion;
     if (
       deviceName &&
       Object.keys(browserStackToLambdaTest.deviceName).includes(deviceName)
     ) {
       // we map BrowserStack names to LambdaTest for better usability
-      deviceName = browserStackToLambdaTest.deviceName[deviceName];
+      deviceName = browserStackToLambdaTest.deviceName[deviceName]!;
     }
     if (
       osVersion &&
@@ -298,7 +299,7 @@ export class LambdaTestDeviceProvider implements DeviceProvider {
     return {
       deviceName,
       platformVersion: osVersion,
-      deviceOrientation: this.project.use.device?.orientation,
+      deviceOrientation: deviceConfig.orientation,
     };
   }
 
