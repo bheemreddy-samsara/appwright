@@ -158,6 +158,12 @@ export type LambdaTestConfig = {
    * Defaults to Appium 3.1.0. Override if your account requires a different version.
    */
   appiumVersion?: string;
+
+  /**
+   * Whether to enable tunnel for LambdaTest.
+   * Default is false.
+   */
+  tunnel?: boolean;
 };
 
 /**
