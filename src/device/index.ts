@@ -334,7 +334,9 @@ export class Device {
   @boxedStep
   async backgroundApp(seconds: number = -1): Promise<void> {
     await this.webDriverClient.executeScript("mobile: backgroundApp", [
-      seconds,
+      {
+        seconds,
+      },
     ]);
   }
 
