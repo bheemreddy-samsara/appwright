@@ -108,6 +108,7 @@ the provider in your config.
       name: "Google Pixel 8",
       osVersion: "14.0",
       appiumVersion: "3.1.0", // Override if your BrowserStack account does not yet support Appium 3
+      appProfiling: true, // Optional: enable BrowserStack App Performance profiling
     },
     buildPath: "app-release.apk",
   },

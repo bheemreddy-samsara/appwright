@@ -25,6 +25,7 @@ These environment variables are required for the BrowserStack
 
 BrowserStack also requires `name` and `osVersion` of the device to be set in the projects in appwright config file.
 If BrowserStack has not enabled Appium 3 for your account yet, set `appiumVersion` in the device config (or `BROWSERSTACK_APPIUM_VERSION` env var) to request the correct server version.
+To capture BrowserStack [App Performance](https://www.browserstack.com/docs/app-automate/appium/debug-failed-tests/app-performance) metrics, set `appProfiling: true` on the device config (this forwards the `appProfiling` capability to BrowserStack).
 
 ### LambdaTest
 
