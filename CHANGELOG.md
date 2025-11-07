@@ -1,5 +1,11 @@
 # appwright
 
+## 0.3.4
+
+### Patch Changes
+
+- d722f5f: Add optional `appProfiling` flag to BrowserStack devices so Appwright can request App Performance profiling and document how to enable it.
+
 ## 0.3.3
 
 ### Patch Changes
