@@ -1,5 +1,11 @@
 # appwright
 
+## 0.3.3
+
+### Patch Changes
+
+- ca8104d: Fix `Device.backgroundApp()` so it sends the object payload Appium 2 expects.
+
 ## 0.3.2
 
 ### Patch Changes
