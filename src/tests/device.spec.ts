@@ -30,13 +30,17 @@ describe("Device", () => {
     test("backgrounds indefinitely by default", async () => {
       const { device, executeScript } = createDevice();
       await device.backgroundApp();
-      expect(executeScript).toHaveBeenCalledWith("mobile: backgroundApp", [-1]);
+      expect(executeScript).toHaveBeenCalledWith("mobile: backgroundApp", [
+        { seconds: -1 },
+      ]);
     });
 
     test("backgrounds for given duration", async () => {
       const { device, executeScript } = createDevice();
       await device.backgroundApp(30);
-      expect(executeScript).toHaveBeenCalledWith("mobile: backgroundApp", [30]);
+      expect(executeScript).toHaveBeenCalledWith("mobile: backgroundApp", [
+        { seconds: 30 },
+      ]);
     });
   });
 });
