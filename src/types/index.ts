@@ -122,6 +122,12 @@ export type BrowserStackConfig = {
    * Defaults to Appium 3.1.0. Override if your account requires a different version.
    */
   appiumVersion?: string;
+
+  /**
+   * Enable BrowserStack App Performance profiling (appProfiling capability).
+   * Defaults to false. When true, BrowserStack captures detailed performance metrics.
+   */
+  appProfiling?: boolean;
 };
 
 export type LambdaTestConfig = {

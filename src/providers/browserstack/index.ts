@@ -311,6 +311,29 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
         `process.env.${envVarKey} is not set. Did the file upload work?`,
       );
     }
+    const bstackOptions: Record<string, unknown> = {
+      debug: true,
+      interactiveDebugging: true,
+      networkLogs: true,
+      appiumVersion: configuredAppiumVersion,
+      enableCameraImageInjection: deviceConfig?.enableCameraImageInjection,
+      idleTimeout: 180,
+      deviceName: deviceConfig?.name,
+      osVersion: deviceConfig.osVersion,
+      platformName: platformName,
+      deviceOrientation: deviceConfig?.orientation,
+      buildName: `${projectName} ${platformName}`,
+      sessionName: `${projectName} ${platformName} test`,
+      buildIdentifier:
+        process.env.GITHUB_ACTIONS === "true"
+          ? `CI ${process.env.GITHUB_RUN_ID}`
+          : process.env.USER,
+    };
+
+    if (typeof deviceConfig?.appProfiling === "boolean") {
+      bstackOptions.appProfiling = deviceConfig.appProfiling;
+    }
+
     return {
       port: 443,
       path: "/wd/hub",
@@ -320,24 +343,7 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
       key: process.env.BROWSERSTACK_ACCESS_KEY,
       hostname: "hub.browserstack.com",
       capabilities: {
-        "bstack:options": {
-          debug: true,
-          interactiveDebugging: true,
-          networkLogs: true,
-          appiumVersion: configuredAppiumVersion,
-          enableCameraImageInjection: deviceConfig?.enableCameraImageInjection,
-          idleTimeout: 180,
-          deviceName: deviceConfig?.name,
-          osVersion: deviceConfig.osVersion,
-          platformName: platformName,
-          deviceOrientation: deviceConfig?.orientation,
-          buildName: `${projectName} ${platformName}`,
-          sessionName: `${projectName} ${platformName} test`,
-          buildIdentifier:
-            process.env.GITHUB_ACTIONS === "true"
-              ? `CI ${process.env.GITHUB_RUN_ID}`
-              : process.env.USER,
-        },
+        "bstack:options": bstackOptions,
         "appium:autoGrantPermissions": true,
         "appium:app": process.env[envVarKey],
         "appium:autoAcceptAlerts": true,
