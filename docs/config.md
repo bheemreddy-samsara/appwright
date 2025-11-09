@@ -27,6 +27,29 @@ BrowserStack also requires `name` and `osVersion` of the device to be set in the
 If BrowserStack has not enabled Appium 3 for your account yet, set `appiumVersion` in the device config (or `BROWSERSTACK_APPIUM_VERSION` env var) to request the correct server version.
 To capture BrowserStack [App Performance](https://www.browserstack.com/docs/app-automate/appium/debug-failed-tests/app-performance) metrics, set `appProfiling: true` on the device config (this forwards the `appProfiling` capability to BrowserStack).
 
+#### iOS App Settings
+
+Configure iOS permissions and app settings for BrowserStack devices:
+
+```typescript
+device: {
+  provider: "browserstack",
+  name: "iPhone 16 Pro",
+  osVersion: "18",
+  updateAppSettings: {
+    "Permission Settings": {
+      Location: {
+        "ALLOW LOCATION ACCESS": "Always",
+        "Precise Location": "ON"
+      }
+    },
+    "Environment": "staging"
+  }
+}
+```
+
+This eliminates the need for permission setup code in your tests. See [iOS App Settings Guide](./ios-app-settings-browserstack.md) for detailed usage.
+
 ### LambdaTest
 
 LambdaTest [Real Device Cloud](https://www.lambdatest.com/support/docs/app-testing-on-real-devices/) can be used to provide

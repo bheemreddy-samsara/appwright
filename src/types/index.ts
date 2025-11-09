@@ -135,6 +135,23 @@ export type BrowserStackConfig = {
    * Defaults to 180 seconds (3 minutes).
    */
   idleTimeout?: number;
+
+  /**
+   * iOS app settings to configure at session start.
+   * Can include Permission Settings and/or custom Settings Bundle entries.
+   * Only supported on iOS devices with BrowserStack provider.
+   *
+   * @example
+   * ```ts
+   * {
+   *   'Permission Settings': {
+   *     Location: { 'ALLOW LOCATION ACCESS': 'Always' }
+   *   },
+   *   'Environment': 'staging'
+   * }
+   * ```
+   */
+  updateAppSettings?: IosAppSettings;
 };
 
 export type LambdaTestConfig = {
@@ -217,6 +234,38 @@ export type EmulatorConfig = {
    */
   orientation?: DeviceOrientation;
 };
+
+/**
+ * iOS permission settings structure (based on BrowserStack API).
+ * Supports both simple string values and nested objects for permissions.
+ */
+export type IosPermissionSettings = Partial<{
+  Location: Partial<{
+    "ALLOW LOCATION ACCESS": "Always" | "While Using the App" | "Never";
+    "Precise Location": "ON" | "OFF";
+  }>;
+  Camera: "Allow" | "Deny";
+  Contacts: "Allow" | "Deny";
+  Photos: "Add Photos Only" | "Selected Photos" | "All Photos" | "None";
+  Notifications: Partial<{
+    "Allow Notifications": "ON" | "OFF";
+  }>;
+  Language: string;
+}>;
+
+/**
+ * Settings bundle for custom app settings (iOS Settings Bundle).
+ */
+export type IosSettingsBundle = Record<string, unknown>;
+
+/**
+ * Combined type for all iOS settings (permissions + custom).
+ * Can include Permission Settings, custom Settings Bundle entries, or both.
+ */
+export type IosAppSettings =
+  | { "Permission Settings": IosPermissionSettings }
+  | IosSettingsBundle
+  | ({ "Permission Settings": IosPermissionSettings } & IosSettingsBundle);
 
 export enum Platform {
   ANDROID = "android",

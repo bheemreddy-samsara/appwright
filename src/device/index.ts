@@ -4,6 +4,8 @@ import { Locator } from "../locator";
 import {
   AppwrightLocator,
   ExtractType,
+  IosAppSettings,
+  IosPermissionSettings,
   Platform,
   TimeoutOptions,
   VisualTraceConfig,
@@ -479,5 +481,77 @@ export class Device {
     ]);
 
     await this.webDriverClient.releaseActions();
+  }
+
+  /**
+   * Updates iOS app settings via BrowserStack executor (mid-session).
+   * For default settings, prefer configuring them in appwright.config.ts.
+   *
+   * @param args - Permission settings or Settings bundle entries
+   * @example
+   * // Update permissions mid-session
+   * await device.updateAppSettings({
+   *   'Permission Settings': { Camera: 'Allow' }
+   * });
+   *
+   * @example
+   * // Update custom settings
+   * await device.updateAppSettings({
+   *   'DarkMode': 1,
+   *   'Environment': 'production'
+   * });
+   */
+  @boxedStep
+  public async updateAppSettings(args: IosAppSettings): Promise<void> {
+    this.assertIOSBrowserStack("updateAppSettings");
+
+    const executor = {
+      action: "updateAppSettings",
+      arguments: args,
+    };
+
+    const script = `browserstack_executor: ${JSON.stringify(executor)}`;
+    await this.webDriverClient.executeScript(script, []);
+  }
+
+  /**
+   * Convenience method for updating iOS permission settings mid-session.
+   * For default permissions, prefer configuring them in appwright.config.ts.
+   *
+   * @param settings - iOS permission settings to update
+   * @example
+   * await device.updatePermissionSettings({
+   *   Location: {
+   *     'ALLOW LOCATION ACCESS': 'Always',
+   *     'Precise Location': 'ON'
+   *   },
+   *   Camera: 'Allow'
+   * });
+   */
+  @boxedStep
+  public async updatePermissionSettings(
+    settings: IosPermissionSettings,
+  ): Promise<void> {
+    return this.updateAppSettings({ "Permission Settings": settings });
+  }
+
+  /**
+   * Validates that the current platform is iOS and provider is BrowserStack.
+   * @private
+   */
+  private assertIOSBrowserStack(methodName: string): void {
+    if (this.getPlatform() !== Platform.IOS) {
+      throw new Error(
+        `${methodName} is only supported on iOS platform. ` +
+          `Current platform: ${this.getPlatform()}`,
+      );
+    }
+    if (this.provider !== "browserstack") {
+      throw new Error(
+        `${methodName} is only supported with BrowserStack provider. ` +
+          `Current provider: ${this.provider}. ` +
+          `See https://www.browserstack.com/docs/app-automate/appium/advanced-features/ios-app-settings`,
+      );
+    }
   }
 }
