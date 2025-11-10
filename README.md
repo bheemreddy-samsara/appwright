@@ -116,6 +116,37 @@ the provider in your config.
 },
 ```
 
+#### iOS App Settings (BrowserStack)
+
+Configure iOS permissions by default in your config:
+
+```ts
+{
+  name: "ios",
+  use: {
+    platform: Platform.IOS,
+    device: {
+      provider: "browserstack",
+      name: "iPhone 16 Pro",
+      osVersion: "18",
+      updateAppSettings: {
+        "Permission Settings": {
+          Location: {
+            "ALLOW LOCATION ACCESS": "Always",
+            "Precise Location": "ON"
+          }
+        }
+      }
+    },
+    buildPath: "bs://<app-id>",
+  },
+}
+
+// Tests run with permissions already granted - no setup needed!
+```
+
+See the [iOS App Settings documentation](./docs/ios-app-settings-browserstack.md) for more details.
+
 #### Run tests on LambdaTest
 
 Appwright supports LambdaTest out of the box. To run tests on LambdaTest, configure

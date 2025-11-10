@@ -6,6 +6,7 @@ import {
   AppwrightConfig,
   DeviceProvider,
   BrowserStackConfig,
+  Platform,
 } from "../../types";
 import { FullProject } from "@playwright/test";
 import { Device } from "../../device";
@@ -332,6 +333,42 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
 
     if (typeof deviceConfig?.appProfiling === "boolean") {
       bstackOptions.appProfiling = deviceConfig.appProfiling;
+    }
+
+    // iOS App Settings support (capability-based for session start)
+    if (platformName === Platform.IOS) {
+      // Support environment variable override for CI/CD
+      const envSettingsJson = process.env.APPWRIGHT_BS_UPDATE_APP_SETTINGS_JSON;
+      let updateAppSettings: unknown;
+      if (envSettingsJson) {
+        try {
+          updateAppSettings = JSON.parse(envSettingsJson);
+        } catch (e) {
+          throw new Error(
+            "APPWRIGHT_BS_UPDATE_APP_SETTINGS_JSON is not valid JSON. " +
+              "Provide a valid JSON string.",
+          );
+        }
+      } else {
+        updateAppSettings = deviceConfig?.updateAppSettings;
+      }
+
+      if (updateAppSettings && typeof updateAppSettings === "object") {
+        // Add to bstack:options as per BrowserStack documentation
+        bstackOptions.updateAppSettings = updateAppSettings;
+
+        // Log for debugging (without exposing sensitive data)
+        const u = updateAppSettings as Record<string, unknown>;
+        const hasPermissions = !!u["Permission Settings"];
+        const customKeys = Object.keys(u).filter(
+          (k) => k !== "Permission Settings",
+        );
+        if (hasPermissions || customKeys.length > 0) {
+          logger.log(
+            `iOS app settings configured: permissions=${hasPermissions}, custom_keys=${customKeys.length}`,
+          );
+        }
+      }
     }
 
     return {
