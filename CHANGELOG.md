@@ -1,5 +1,11 @@
 # appwright
 
+## 0.4.0
+
+### Minor Changes
+
+- ddb33f3: Add BrowserStack `updateAppSettings` support for iOS devices, including runtime helpers, provider capability forwarding, and documentation.
+
 ## 0.3.5
 
 ### Patch Changes
