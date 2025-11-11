@@ -1,5 +1,11 @@
 # appwright
 
+## 0.5.0
+
+### Minor Changes
+
+- c40123e: Add per-test status syncing for persistentDevice so BrowserStack and LambdaTest sessions reflect test names and outcomes.
+
 ## 0.4.0
 
 ### Minor Changes
