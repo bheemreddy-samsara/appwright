@@ -20,6 +20,7 @@ export function boxedStep(
           retryIndex: number,
           config?: any,
         ) => void;
+        ensurePersistentLifecycle?: (testInfo: TestInfo) => Promise<void>;
       };
       takeScreenshot?: () => Promise<Buffer>;
       initializeVisualTrace?: (
@@ -27,6 +28,7 @@ export function boxedStep(
         retryIndex: number,
         config?: any,
       ) => void;
+      ensurePersistentLifecycle?: (testInfo: TestInfo) => Promise<void>;
     },
     ...args: any
   ) {
@@ -58,6 +60,14 @@ export function boxedStep(
             try {
               const testInfo = test.info();
               const device = this.device || this;
+
+              if (
+                device &&
+                typeof device.ensurePersistentLifecycle === "function" &&
+                testInfo
+              ) {
+                await device.ensurePersistentLifecycle(testInfo);
+              }
 
               // Initialize or reinitialize if needed
               if (device?.initializeVisualTrace && testInfo) {

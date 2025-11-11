@@ -3,6 +3,7 @@ import type { Client as WebDriverClient } from "webdriver";
 import { Locator } from "../locator";
 import {
   AppwrightLocator,
+  DeviceProvider,
   ExtractType,
   IosAppSettings,
   IosPermissionSettings,
@@ -26,13 +27,112 @@ import { TestInfo } from "@playwright/test";
 
 export class Device {
   private visualTraceService?: VisualTraceService;
+  private deviceProvider?: DeviceProvider;
+  private persistentSyncEnabled = false;
+  private activePersistentKey?: string;
 
   constructor(
     private webDriverClient: WebDriverClient,
     private bundleId: string | undefined,
     private timeoutOpts: TimeoutOptions,
     private provider: string,
-  ) {}
+    deviceProvider?: DeviceProvider,
+  ) {
+    this.deviceProvider = deviceProvider;
+  }
+
+  attachDeviceProvider(provider: DeviceProvider): void {
+    this.deviceProvider = provider;
+  }
+
+  enablePersistentStatusSync(): void {
+    this.persistentSyncEnabled = true;
+  }
+
+  async ensurePersistentLifecycle(testInfo: TestInfo): Promise<void> {
+    if (!this.shouldSyncPersistent()) {
+      return;
+    }
+    await this.preparePersistentTest(testInfo);
+  }
+
+  async preparePersistentTest(testInfo: TestInfo): Promise<void> {
+    if (!this.shouldSyncPersistent()) {
+      return;
+    }
+    const key = this.persistentKey(testInfo);
+    if (this.activePersistentKey === key) {
+      return;
+    }
+    this.activePersistentKey = key;
+    await this.safeSync({ name: testInfo.title });
+  }
+
+  async finalizePersistentTest(testInfo: TestInfo): Promise<void> {
+    if (!this.shouldSyncPersistent()) {
+      return;
+    }
+    const key = this.persistentKey(testInfo);
+    if (!this.activePersistentKey) {
+      this.activePersistentKey = key;
+    }
+    const status = this.mapPlaywrightStatus(testInfo.status);
+    const reason =
+      status === "failed" ? this.failureReason(testInfo) : undefined;
+    await this.safeSync({
+      name: testInfo.title,
+      status,
+      reason,
+    });
+    this.activePersistentKey = undefined;
+  }
+
+  private shouldSyncPersistent(): boolean {
+    return (
+      this.persistentSyncEnabled === true &&
+      typeof this.deviceProvider?.syncTestDetails === "function"
+    );
+  }
+
+  private persistentKey(testInfo: TestInfo): string {
+    return `${testInfo.testId}#${testInfo.retry}`;
+  }
+
+  private mapPlaywrightStatus(status: TestInfo["status"]): string {
+    switch (status) {
+      case "failed":
+      case "timedOut":
+      case "interrupted":
+        return "failed";
+      case "passed":
+      case "skipped":
+      default:
+        return "passed";
+    }
+  }
+
+  private failureReason(testInfo: TestInfo): string | undefined {
+    const error = testInfo.errors?.[0];
+    if (error?.message) {
+      return error.message;
+    }
+    return testInfo.error?.message;
+  }
+
+  private async safeSync(details: {
+    status?: string;
+    reason?: string;
+    name?: string;
+  }): Promise<void> {
+    if (!this.deviceProvider?.syncTestDetails) {
+      return;
+    }
+    try {
+      await this.deviceProvider.syncTestDetails(details);
+    } catch (error) {
+      logger.warn("Failed to sync test details", error);
+    }
+  }
 
   /**
    * Initialize Visual Trace Service for screenshot capture during test execution

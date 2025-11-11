@@ -12,6 +12,8 @@ import { createDeviceProvider } from "../providers";
 import { WorkerInfoStore } from "./workerInfo";
 import { stopAppiumServer } from "../providers/appium";
 
+const persistentDevicesByWorker = new Map<number, Device>();
+
 type TestLevelFixtures = {
   /**
    * Device provider to be used for the test.
@@ -98,12 +100,35 @@ export const test = base.extend<TestLevelFixtures, WorkerLevelFixtures>({
         beforeSession,
         afterSession,
       );
-      await use(device);
-      await workerInfoStore.saveWorkerEndTime(workerIndex, new Date());
-      await device.close();
+      device.attachDeviceProvider(deviceProvider);
+      device.enablePersistentStatusSync();
+      persistentDevicesByWorker.set(workerIndex, device);
+      try {
+        await use(device);
+      } finally {
+        persistentDevicesByWorker.delete(workerIndex);
+        await workerInfoStore.saveWorkerEndTime(workerIndex, new Date());
+        await device.close();
+      }
     },
     { scope: "worker" },
   ],
+});
+
+test.beforeEach(async ({}, testInfo) => {
+  const device = persistentDevicesByWorker.get(testInfo.workerIndex);
+  if (!device) {
+    return;
+  }
+  await device.preparePersistentTest(testInfo);
+});
+
+test.afterEach(async ({}, testInfo) => {
+  const device = persistentDevicesByWorker.get(testInfo.workerIndex);
+  if (!device) {
+    return;
+  }
+  await device.finalizePersistentTest(testInfo);
 });
 
 /**
