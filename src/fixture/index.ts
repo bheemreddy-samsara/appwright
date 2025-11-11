@@ -11,8 +11,54 @@ import { Device } from "../device";
 import { createDeviceProvider } from "../providers";
 import { WorkerInfoStore } from "./workerInfo";
 import { stopAppiumServer } from "../providers/appium";
+import { logger } from "../logger";
 
-const persistentDevicesByWorker = new Map<number, Device>();
+type PersistentDeviceContext = {
+  device: Device;
+  activeOperations: number;
+  idlePromise?: Promise<void>;
+  resolveIdle?: () => void;
+};
+
+const persistentDevicesByWorker = new Map<number, PersistentDeviceContext>();
+
+function createPersistentContext(device: Device): PersistentDeviceContext {
+  return {
+    device,
+    activeOperations: 0,
+  };
+}
+
+async function runWithLifecycle(
+  context: PersistentDeviceContext,
+  task: () => Promise<void>,
+): Promise<void> {
+  context.activeOperations += 1;
+  try {
+    await task();
+  } finally {
+    context.activeOperations -= 1;
+    if (context.activeOperations === 0 && context.resolveIdle) {
+      context.resolveIdle();
+      context.resolveIdle = undefined;
+      context.idlePromise = undefined;
+    }
+  }
+}
+
+async function waitForLifecycleToComplete(
+  context: PersistentDeviceContext,
+): Promise<void> {
+  if (context.activeOperations === 0) {
+    return;
+  }
+  if (!context.idlePromise) {
+    context.idlePromise = new Promise<void>((resolve) => {
+      context.resolveIdle = resolve;
+    });
+  }
+  await context.idlePromise;
+}
 
 type TestLevelFixtures = {
   /**
@@ -102,10 +148,12 @@ export const test = base.extend<TestLevelFixtures, WorkerLevelFixtures>({
       );
       device.attachDeviceProvider(deviceProvider);
       device.enablePersistentStatusSync();
-      persistentDevicesByWorker.set(workerIndex, device);
+      const context = createPersistentContext(device);
+      persistentDevicesByWorker.set(workerIndex, context);
       try {
         await use(device);
       } finally {
+        await waitForLifecycleToComplete(context);
         persistentDevicesByWorker.delete(workerIndex);
         await workerInfoStore.saveWorkerEndTime(workerIndex, new Date());
         await device.close();
@@ -116,19 +164,31 @@ export const test = base.extend<TestLevelFixtures, WorkerLevelFixtures>({
 });
 
 test.beforeEach(async ({}, testInfo) => {
-  const device = persistentDevicesByWorker.get(testInfo.workerIndex);
-  if (!device) {
+  const context = persistentDevicesByWorker.get(testInfo.workerIndex);
+  if (!context) {
     return;
   }
-  await device.preparePersistentTest(testInfo);
+  await runWithLifecycle(context, async () => {
+    try {
+      await context.device.preparePersistentTest(testInfo);
+    } catch (error) {
+      logger.warn("Failed to prepare persistent test", error);
+    }
+  });
 });
 
 test.afterEach(async ({}, testInfo) => {
-  const device = persistentDevicesByWorker.get(testInfo.workerIndex);
-  if (!device) {
+  const context = persistentDevicesByWorker.get(testInfo.workerIndex);
+  if (!context) {
     return;
   }
-  await device.finalizePersistentTest(testInfo);
+  await runWithLifecycle(context, async () => {
+    try {
+      await context.device.finalizePersistentTest(testInfo);
+    } catch (error) {
+      logger.warn("Failed to finalize persistent test", error);
+    }
+  });
 });
 
 /**

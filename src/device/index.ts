@@ -74,7 +74,13 @@ export class Device {
     }
     const key = this.persistentKey(testInfo);
     if (!this.activePersistentKey) {
-      this.activePersistentKey = key;
+      logger.warn(
+        "finalizePersistentTest called before preparePersistentTest; syncing anyway.",
+      );
+    } else if (this.activePersistentKey !== key) {
+      logger.warn(
+        "finalizePersistentTest received unexpected test key; syncing anyway.",
+      );
     }
     const status = this.mapPlaywrightStatus(testInfo.status);
     const reason =
