@@ -558,25 +558,6 @@ export class Device {
   }
 
   /**
-   * Determine whether the virtual keyboard is currently displayed.
-   */
-  @boxedStep
-  async isKeyboardShown(): Promise<boolean> {
-    if (this.getPlatform() !== Platform.IOS) {
-      throw new Error("isKeyboardShown is only supported on iOS sessions.");
-    }
-    const client = this.webDriverClient as WebDriverClient & {
-      isKeyboardShown?: () => Promise<boolean>;
-    };
-    if (typeof client.isKeyboardShown !== "function") {
-      throw new Error(
-        "Underlying WebDriver client does not implement isKeyboardShown().",
-      );
-    }
-    return await client.isKeyboardShown();
-  }
-
-  /**
    * Get a screenshot of the current screen as a base64 encoded string.
    */
   @boxedStep

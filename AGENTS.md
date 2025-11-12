@@ -39,7 +39,6 @@ npm run changeset # Create or update release notes
 
 - `device.getTimeouts()` – Returns the underlying WebDriver timeout configuration (implicit, pageLoad, script, command if available).
 - `device.getWindowRect()` – Exposes the active window rectangle `{ width, height, x, y }` for layout-aware actions.
-- `device.isKeyboardShown()` – Checks virtual keyboard visibility; supported on iOS sessions where the provider exposes the API.
 
 ## Development Guardrails
 

@@ -2,4 +2,4 @@
 "@samsara-dev/appwright": minor
 ---
 
-Expose `Device.getTimeouts()` along with lightweight window and keyboard helpers for better session introspection.
+Expose `Device.getTimeouts()` along with a lightweight window helper for better session introspection.
