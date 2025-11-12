@@ -355,18 +355,14 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
       }
 
       if (updateAppSettings && typeof updateAppSettings === "object") {
-        // Add to bstack:options as per BrowserStack documentation
-        bstackOptions.updateAppSettings = updateAppSettings;
-
-        // Log for debugging (without exposing sensitive data)
-        const u = updateAppSettings as Record<string, unknown>;
-        const hasPermissions = !!u["Permission Settings"];
-        const customKeys = Object.keys(u).filter(
-          (k) => k !== "Permission Settings",
+        const settings = updateAppSettings as Record<string, unknown>;
+        const hasPermissions = !!settings["Permission Settings"];
+        const customKeys = Object.keys(settings).filter(
+          (key) => key !== "Permission Settings",
         );
         if (hasPermissions || customKeys.length > 0) {
           logger.log(
-            `iOS app settings configured: permissions=${hasPermissions}, custom_keys=${customKeys.length}`,
+            "iOS app settings detected; they will be applied after session start via fixtures.",
           );
         }
       }

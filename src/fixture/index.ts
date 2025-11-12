@@ -6,6 +6,9 @@ import {
   ActionOptions,
   AppwrightConfig,
   VisualTraceConfig,
+  Platform,
+  BrowserStackConfig,
+  IosAppSettings,
 } from "../types";
 import { Device } from "../device";
 import { createDeviceProvider } from "../providers";
@@ -21,6 +24,60 @@ type PersistentDeviceContext = {
 };
 
 const persistentDevicesByWorker = new Map<number, PersistentDeviceContext>();
+
+async function applyIosAppSettings(
+  project: FullProject<AppwrightConfig>,
+  device: Device,
+): Promise<void> {
+  if (project.use.platform !== Platform.IOS) {
+    return;
+  }
+
+  const deviceConfig = project.use.device;
+  if (!deviceConfig || deviceConfig.provider !== "browserstack") {
+    return;
+  }
+
+  const browserStackConfig = deviceConfig as BrowserStackConfig;
+
+  const envSettingsJson = process.env.APPWRIGHT_BS_UPDATE_APP_SETTINGS_JSON;
+  let settings: IosAppSettings | undefined;
+
+  if (envSettingsJson) {
+    try {
+      settings = JSON.parse(envSettingsJson) as IosAppSettings;
+    } catch (error) {
+      throw new Error(
+        "APPWRIGHT_BS_UPDATE_APP_SETTINGS_JSON is not valid JSON. Provide a valid JSON string.",
+      );
+    }
+  } else {
+    settings = browserStackConfig.updateAppSettings;
+  }
+
+  if (!settings || typeof settings !== "object") {
+    return;
+  }
+
+  try {
+    await device.updateAppSettings(settings);
+
+    const hasPermissions = Object.prototype.hasOwnProperty.call(
+      settings,
+      "Permission Settings",
+    );
+    const customKeys = Object.keys(settings).filter(
+      (key) => key !== "Permission Settings",
+    );
+    if (hasPermissions || customKeys.length > 0) {
+      logger.log(
+        `iOS app settings applied before tests: permissions=${hasPermissions}, custom_keys=${customKeys.length}`,
+      );
+    }
+  } catch (error) {
+    logger.warn("Failed to apply iOS app settings in fixture", error);
+  }
+}
 
 function createPersistentContext(device: Device): PersistentDeviceContext {
   return {
@@ -106,6 +163,11 @@ export const test = base.extend<TestLevelFixtures, WorkerLevelFixtures>({
     ).use.visualTrace;
     device.initializeVisualTrace(testInfo, testInfo.retry, visualTraceConfig);
 
+    await applyIosAppSettings(
+      testInfo.project as FullProject<AppwrightConfig>,
+      device,
+    );
+
     await deviceProvider.syncTestDetails?.({ name: testInfo.title });
     await use(device);
     await device.close();
@@ -148,6 +210,12 @@ export const test = base.extend<TestLevelFixtures, WorkerLevelFixtures>({
       );
       device.attachDeviceProvider(deviceProvider);
       device.enablePersistentStatusSync();
+
+      await applyIosAppSettings(
+        project as FullProject<AppwrightConfig>,
+        device,
+      );
+
       const context = createPersistentContext(device);
       persistentDevicesByWorker.set(workerIndex, context);
       try {
