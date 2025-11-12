@@ -25,6 +25,8 @@ import {
 } from "../visualTrace";
 import { TestInfo } from "@playwright/test";
 
+type DeviceTimeouts = Partial<Record<string, number>> & { command?: number };
+
 export class Device {
   private visualTraceService?: VisualTraceService;
   private deviceProvider?: DeviceProvider;
@@ -532,6 +534,27 @@ export class Device {
   @boxedStep
   async waitForTimeout(timeout: number) {
     await new Promise((resolve) => setTimeout(resolve, timeout));
+  }
+
+  /**
+   * Get the current timeout settings for the WebDriver session.
+   */
+  @boxedStep
+  async getTimeouts(): Promise<DeviceTimeouts> {
+    return (await this.webDriverClient.getTimeouts()) as DeviceTimeouts;
+  }
+
+  /**
+   * Get the current window rectangle dimensions.
+   */
+  @boxedStep
+  async getWindowRect(): Promise<{
+    width: number;
+    height: number;
+    x: number;
+    y: number;
+  }> {
+    return await this.webDriverClient.getWindowRect();
   }
 
   /**
