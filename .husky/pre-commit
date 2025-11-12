@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+echo "🔍 Running pre-commit lint check..."
+npm run lint || {
+  echo "❌ ESLint failed. Please fix linting errors before committing."
+  echo "💡 Run 'npm run lint -- --fix' to auto-fix some issues."
+  exit 1
+}
+echo "✅ Lint check passed!"

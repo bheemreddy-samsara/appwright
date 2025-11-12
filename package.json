@@ -19,7 +19,8 @@
     "changeset": "changeset",
     "clean": "tsc --build --clean",
     "release": "changeset publish",
-    "build:doc": "typedoc --out api-references src"
+    "build:doc": "typedoc --out api-references src",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
@@ -36,6 +37,7 @@
   "license": "Apache-2.0",
   "description": "E2E mobile app testing done right, with the Playwright test runner",
   "dependencies": {
+    "@aws-sdk/client-device-farm": "^3.635.0",
     "@empiricalrun/llm": "^0.9.25",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@playwright/test": "^1.56.1",
@@ -57,6 +59,7 @@
     "@types/fluent-ffmpeg": "^2.1.26",
     "@types/node": "^22.5.2",
     "eslint": "8.57.0",
+    "husky": "^9.1.7",
     "typedoc": "0.26.7",
     "vitest": "^2.1.3"
   }
