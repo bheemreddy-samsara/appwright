@@ -1,5 +1,11 @@
 # appwright
 
+## 0.5.1
+
+### Patch Changes
+
+- d5b7e84: Apply BrowserStack iOS permission settings after the app install by default, using a worker fixture so sessions start with the requested configuration.
+
 ## 0.5.0
 
 ### Minor Changes
