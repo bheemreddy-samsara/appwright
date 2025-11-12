@@ -1,5 +1,11 @@
 # appwright
 
+## 0.6.0
+
+### Minor Changes
+
+- 98c9650: Expose `Device.getTimeouts()` along with a lightweight window helper for better session introspection.
+
 ## 0.5.1
 
 ### Patch Changes
