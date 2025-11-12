@@ -25,6 +25,8 @@ import {
 } from "../visualTrace";
 import { TestInfo } from "@playwright/test";
 
+type DeviceTimeouts = Partial<Record<string, number>> & { command?: number };
+
 export class Device {
   private visualTraceService?: VisualTraceService;
   private deviceProvider?: DeviceProvider;
@@ -532,6 +534,46 @@ export class Device {
   @boxedStep
   async waitForTimeout(timeout: number) {
     await new Promise((resolve) => setTimeout(resolve, timeout));
+  }
+
+  /**
+   * Get the current timeout settings for the WebDriver session.
+   */
+  @boxedStep
+  async getTimeouts(): Promise<DeviceTimeouts> {
+    return (await this.webDriverClient.getTimeouts()) as DeviceTimeouts;
+  }
+
+  /**
+   * Get the current window rectangle dimensions.
+   */
+  @boxedStep
+  async getWindowRect(): Promise<{
+    width: number;
+    height: number;
+    x: number;
+    y: number;
+  }> {
+    return await this.webDriverClient.getWindowRect();
+  }
+
+  /**
+   * Determine whether the virtual keyboard is currently displayed.
+   */
+  @boxedStep
+  async isKeyboardShown(): Promise<boolean> {
+    if (this.getPlatform() !== Platform.IOS) {
+      throw new Error("isKeyboardShown is only supported on iOS sessions.");
+    }
+    const client = this.webDriverClient as WebDriverClient & {
+      isKeyboardShown?: () => Promise<boolean>;
+    };
+    if (typeof client.isKeyboardShown !== "function") {
+      throw new Error(
+        "Underlying WebDriver client does not implement isKeyboardShown().",
+      );
+    }
+    return await client.isKeyboardShown();
   }
 
   /**
