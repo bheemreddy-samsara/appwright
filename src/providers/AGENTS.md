@@ -24,6 +24,7 @@ npm test -- src/tests/device.spec.ts
 - **BrowserStack:**
   - ✅ Upload local/HTTP/S3 builds via `globalSetup`; see new S3 helper in `src/providers/browserstack/s3.ts`
   - ✅ Keep session sync details current (`syncTestDetails`); tested in `src/tests/device.spec.ts`
+  - ✅ Configure `permissionPrompts` on `BrowserStackConfig` to control Android auto-grant and iOS alert handling (iOS 13+ flips accept/dismiss capabilities)
   - ❌ Don’t ignore AWS region—`AWS_REGION` or `AWS_DEFAULT_REGION` must be present for S3 downloads
 - **LambdaTest:** mirror BrowserStack capabilities; follow structure in `src/providers/lambdatest/index.ts`
 - **Emulator & Local:** rely on Appium bootstrap in `src/providers/appium.ts`; ensure shutdown via `stopAppiumServer`

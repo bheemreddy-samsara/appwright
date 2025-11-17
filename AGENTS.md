@@ -45,6 +45,7 @@ npm run changeset     # prepare release notes when changes ship
 - Inspect Playwright fixtures: `rg -n "extend<TestLevelFixtures" src/fixture` (fallback: `grep -rn "extend<TestLevelFixtures" src/fixture`)
 - Track vision helpers: `rg -n "AppwrightVision" src/vision` (fallback: `grep -rn "AppwrightVision" src/vision`)
 - Find targeted tests: `rg -n "\\.spec\\.ts" src/tests` (fallback: `grep -rn "\.spec\.ts" src/tests`)
+- Review BrowserStack permission prompts wiring: `rg -n "permissionPrompts" src/providers src/types`
 
 ## 6. Definition of Done
 - `npm run lint && npm run build && npm test -- --run` must all pass locally
