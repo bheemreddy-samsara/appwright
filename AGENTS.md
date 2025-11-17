@@ -1,68 +1,53 @@
-# AGENTS OVERVIEW
+# Appwright Agent Guide
 
-This document summarizes the Appwright test automation project so autonomous agents understand the environment, capabilities, and workflows before making changes.
+## 1. Project Snapshot
+- **Repo type:** Single-package TypeScript library (no workspaces)
+- **Stack:** Node.js ≥20, TypeScript, Playwright fixtures, Vitest, ESLint (`@empiricalrun`)
+- **Docs:** Each major directory ships its own `AGENTS.md`; nearest file wins
 
-## Project Snapshot
-
-- **Package name:** `@samsara-dev/appwright`
-- **Language:** TypeScript targeting Node.js ≥ 20.19
-- **Distribution entry:** `dist/index.js` (compiled via `npm run build`)
-- **Primary domains:** Mobile app end-to-end automation on real devices or device farms (BrowserStack, LambdaTest, local emulators)
-
-## Repository Layout
-
-- `src/` – TypeScript sources (single source of truth)
-- `dist/` – Generated JavaScript and type declarations; never edit manually
-- `example/` – Sample usage and fixtures
-- `docs/` – Generated documentation assets
-- `.changeset/` – Release notes authored via Changesets
-- `node_modules/` – Managed dependencies (do not commit edits)
-
-## Core Concepts & Types
-
-- `Device` class wraps a WebDriver client for mobile-specific flows and is exported from `src/index.ts`.
-- `Locator` utilities hold find strategies and timeout behavior derived from `TimeoutOptions`.
-- Providers (`src/providers/*`) bootstrap sessions for BrowserStack, LambdaTest, local, and emulator contexts.
-- Vision utilities in `src/vision` offer computer-vision-assisted interactions.
-
-## Key Commands
-
+## 2. Root Setup Commands
 ```bash
-npm run build   # Compile TypeScript to dist/
-npm test        # Run Vitest test suite once
-
-npm run lint    # Lint via ESLint configuration
-npm run changeset # Create or update release notes
+npm ci                # install dependencies (use npm install for incremental updates)
+npm run lint          # ESLint with @empiricalrun rules
+npm run build         # tsc --build (typecheck + emit to dist/)
+npm test -- --run     # Vitest single pass (avoids interactive watch mode)
+npm run changeset     # prepare release notes when changes ship
 ```
 
-## Device Helper Summary
+## 3. Universal Conventions
+- Share a short plan with maintainers **before editing** (hard requirement)
+- Author new code in `src/**`; never modify generated `dist/**`
+- Rely on `src/logger.ts` instead of raw `console` (exceptions stream subprocess output only)
+- Follow Conventional Commits (`feat:`, `fix:`, `chore:`) and branch from `main`
+- Keep APIs backward compatible; prefer additive options over breaking changes
+- Always generate a Changeset that captures the user-facing impact of the feature you worked on
 
-- `device.getTimeouts()` – Returns the underlying WebDriver timeout configuration (implicit, pageLoad, script, command if available).
-- `device.getWindowRect()` – Exposes the active window rectangle `{ width, height, x, y }` for layout-aware actions.
+## 4. Security & Secrets
+- Never commit API keys, BrowserStack creds, or AWS secrets; load via environment variables
+- BrowserStack needs `BROWSERSTACK_USERNAME` / `BROWSERSTACK_ACCESS_KEY`
+- Remote build downloads require AWS credentials (`AWS_REGION` plus standard SDK env vars)
+- Avoid storing PII or test artifacts in the repo; use external storage for logs/videos
 
-## Development Guardrails
+## 5. JIT Index (what to open, not what to paste)
 
-- Always apply edits in `src/` and rebuild; never patch `dist/` directly.
-- Ensure additions remain backward compatible; prefer optional or additive APIs.
-- Run build + tests before concluding any workflow to catch regressions.
-- Use Changesets for versioned changes and keep release notes concise.
+### Package Structure
+- Core library: `src/` → [see src/AGENTS.md](src/AGENTS.md)
+- Device runtime: `src/device/` → [see src/device/AGENTS.md](src/device/AGENTS.md)
+- Providers (BrowserStack, LambdaTest, emulator, local): `src/providers/` → [see src/providers/AGENTS.md](src/providers/AGENTS.md)
+- Vision utilities: `src/vision/` → [see src/vision/AGENTS.md](src/vision/AGENTS.md)
+- Visual trace capture: `src/visualTrace/` → [see src/visualTrace/AGENTS.md](src/visualTrace/AGENTS.md)
+- Test suite: `src/tests/` → [see src/tests/AGENTS.md](src/tests/AGENTS.md)
+- Example consumer app: `example/` → [see example/AGENTS.md](example/AGENTS.md)
 
-## Provider Notes
+### Quick Find Commands
+- Locate a public export: `rg -n "export .*" src/index.ts src/types` (fallback: `grep -rn "export .*" src/index.ts src/types`)
+- Discover provider hooks: `rg -n "DeviceProvider" src/providers` (fallback: `grep -rn "DeviceProvider" src/providers`)
+- Inspect Playwright fixtures: `rg -n "extend<TestLevelFixtures" src/fixture` (fallback: `grep -rn "extend<TestLevelFixtures" src/fixture`)
+- Track vision helpers: `rg -n "AppwrightVision" src/vision` (fallback: `grep -rn "AppwrightVision" src/vision`)
+- Find targeted tests: `rg -n "\\.spec\\.ts" src/tests` (fallback: `grep -rn "\.spec\.ts" src/tests`)
 
-- BrowserStack-specific capabilities live under `src/providers/browserstack` and may take advantage of executor scripts (e.g., camera image injection, keyboard state).
-- LambdaTest support mirrors BrowserStack patterns but with differing executor APIs.
-- Local and emulator providers rely on Appium capabilities configured through project fixtures.
-
-## Telemetry & Vision
-
-- Visual trace services are coordinated via `src/visualTrace` to capture screenshots across retries.
-- Vision-based interactions are powered by `@empiricalrun/llm` models; see `Device.beta` helpers for experimental flows.
-
-## Release Workflow
-
-1. Author a Changeset describing user-facing impact.
-2. Run `npm run build` and `npm test` to validate artifacts.
-3. Submit PR targeting `main`; CI validates lint/tests.
-4. Publish via `changeset publish` when ready for release.
-
-Agents should adhere to these guardrails to ensure repeatable, secure automation within the Appwright codebase.
+## 6. Definition of Done
+- `npm run lint && npm run build && npm test -- --run` must all pass locally
+- Add a Changeset entry for user-facing changes
+- Ensure documentation in relevant `AGENTS.md` files reflects the update
+- Confirm the plan was shared and acknowledged before merging
