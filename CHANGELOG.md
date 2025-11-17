@@ -1,5 +1,11 @@
 # appwright
 
+## 0.7.0
+
+### Minor Changes
+
+- 3f00c08: Add device-level controls for BrowserStack permission prompts, including Android auto-grant toggles and iOS alert behaviour that respects the iOS 13 capability flip.
+
 ## 0.6.1
 
 ### Patch Changes
