@@ -36,6 +36,7 @@
   "license": "Apache-2.0",
   "description": "E2E mobile app testing done right, with the Playwright test runner",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.932.0",
     "@empiricalrun/llm": "^0.9.25",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@playwright/test": "^1.56.1",

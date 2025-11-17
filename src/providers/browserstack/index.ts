@@ -11,6 +11,7 @@ import {
 import { FullProject } from "@playwright/test";
 import { Device } from "../../device";
 import { logger } from "../../logger";
+import { downloadS3Artifact, isS3Uri, type DownloadedS3Artifact } from "./s3";
 
 type BrowserStackSessionDetails = {
   name: string;
@@ -95,42 +96,60 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
       );
     }
     const buildPath = this.project.use.buildPath!;
-    const isHttpUrl = buildPath.startsWith("http");
+    const isS3Url = isS3Uri(buildPath);
+    const isHttpUrl = !isS3Url && buildPath.startsWith("http");
     const isBrowserStackUrl = buildPath.startsWith("bs://");
     let appUrl: string | undefined = undefined;
-    if (isBrowserStackUrl) {
-      appUrl = buildPath;
-    } else {
-      // Upload the file to BrowserStack and get the appUrl
-      let body;
-      let headers = {
-        Authorization: getAuthHeader(),
-      };
-      if (isHttpUrl) {
-        body = new URLSearchParams({
-          url: buildPath,
-        });
+    let downloadedArtifact: DownloadedS3Artifact | undefined;
+
+    try {
+      if (isBrowserStackUrl) {
+        appUrl = buildPath;
       } else {
-        if (!fs.existsSync(buildPath)) {
-          throw new Error(`Build file not found: ${buildPath}`);
+        // Upload the file to BrowserStack and get the appUrl
+        let body;
+        let headers = {
+          Authorization: getAuthHeader(),
+        };
+        let uploadSource = buildPath;
+
+        if (isS3Url) {
+          logger.log(`Downloading build from S3: ${buildPath}`);
+          downloadedArtifact = await downloadS3Artifact(buildPath);
+          uploadSource = downloadedArtifact.filePath;
         }
-        const form = new FormData();
-        form.append("file", fs.createReadStream(buildPath));
-        headers = { ...headers, ...form.getHeaders() };
-        body = form;
+
+        if (isHttpUrl) {
+          body = new URLSearchParams({
+            url: buildPath,
+          });
+        } else {
+          if (!fs.existsSync(uploadSource)) {
+            throw new Error(`Build file not found: ${uploadSource}`);
+          }
+          const form = new FormData();
+          form.append("file", fs.createReadStream(uploadSource));
+          headers = { ...headers, ...form.getHeaders() };
+          body = form;
+        }
+        const fetch = (await import("node-fetch")).default;
+        logger.log(`Uploading build to BrowserStack: ${uploadSource}`);
+        const response = await fetch(`${API_BASE_URL}/upload`, {
+          method: "POST",
+          headers,
+          body,
+        });
+        const data = await response.json();
+        appUrl = (data as any).app_url;
+        if (!appUrl) {
+          logger.error("Uploading the build failed:", data);
+          throw new Error(
+            `Failed to upload build to BrowserStack: ${JSON.stringify(data)}`,
+          );
+        }
       }
-      const fetch = (await import("node-fetch")).default;
-      logger.log(`Uploading: ${buildPath}`);
-      const response = await fetch(`${API_BASE_URL}/upload`, {
-        method: "POST",
-        headers,
-        body,
-      });
-      const data = await response.json();
-      appUrl = (data as any).app_url;
-      if (!appUrl) {
-        logger.error("Uploading the build failed:", data);
-      }
+    } finally {
+      await downloadedArtifact?.cleanup();
     }
     process.env[envVarKeyForBuild(this.project.name)] = appUrl;
   }
