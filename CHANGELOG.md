@@ -1,5 +1,12 @@
 # appwright
 
+## 0.6.1
+
+### Patch Changes
+
+- 40979ac: - add BrowserStack S3 buildPath support with local download helper and coverage
+  - restructure hierarchical AGENTS.md guidance and reminders for contributors
+
 ## 0.6.0
 
 ### Minor Changes
