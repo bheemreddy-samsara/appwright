@@ -152,6 +152,27 @@ export type BrowserStackConfig = {
    * ```
    */
   updateAppSettings?: IosAppSettings;
+
+  /**
+   * Controls how BrowserStack handles system permission prompts for this device.
+   * Defaults to automatically granting Android permissions and accepting iOS alerts.
+   */
+  permissionPrompts?: BrowserStackPermissionPrompts;
+};
+
+export type BrowserStackPermissionPrompts = {
+  android?: {
+    /**
+     * When true, auto-grant Android app permissions on install. Set to false to disable, or "manual" to omit the capability entirely.
+     */
+    grantPermissions?: boolean | "manual";
+  };
+  ios?: {
+    /**
+     * Desired handling for iOS permission alerts. Defaults to "accept" and accounts for the iOS 13+ capability flip.
+     */
+    behavior?: "accept" | "dismiss" | "manual";
+  };
 };
 
 export type LambdaTestConfig = {

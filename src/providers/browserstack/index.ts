@@ -332,6 +332,7 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
         `process.env.${envVarKey} is not set. Did the file upload work?`,
       );
     }
+    const permissionPrompts = deviceConfig?.permissionPrompts;
     const bstackOptions: Record<string, unknown> = {
       debug: true,
       interactiveDebugging: true,
@@ -387,6 +388,44 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
       }
     }
 
+    const capabilities: Record<string, unknown> = {
+      "bstack:options": bstackOptions,
+      "appium:app": process.env[envVarKey],
+      "appium:fullReset": true,
+      "appium:settings[snapshotMaxDepth]": 62,
+    };
+
+    if (platformName === Platform.ANDROID) {
+      const grantPreference = permissionPrompts?.android?.grantPermissions;
+      if (grantPreference !== "manual") {
+        capabilities["appium:autoGrantPermissions"] =
+          typeof grantPreference === "boolean" ? grantPreference : true;
+      }
+    }
+
+    if (platformName === Platform.IOS) {
+      const iosBehavior = permissionPrompts?.ios?.behavior ?? "accept";
+      if (iosBehavior !== "manual") {
+        const osVersionNumeric = parseFloat(deviceConfig.osVersion);
+        const isFlipped =
+          !Number.isNaN(osVersionNumeric) && osVersionNumeric >= 13;
+        const acceptKey = isFlipped
+          ? "appium:autoDismissAlerts"
+          : "appium:autoAcceptAlerts";
+        const dismissKey = isFlipped
+          ? "appium:autoAcceptAlerts"
+          : "appium:autoDismissAlerts";
+
+        if (iosBehavior === "accept") {
+          capabilities[acceptKey] = true;
+        }
+
+        if (iosBehavior === "dismiss") {
+          capabilities[dismissKey] = true;
+        }
+      }
+    }
+
     return {
       port: 443,
       path: "/wd/hub",
@@ -395,14 +434,7 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
       user: process.env.BROWSERSTACK_USERNAME,
       key: process.env.BROWSERSTACK_ACCESS_KEY,
       hostname: "hub.browserstack.com",
-      capabilities: {
-        "bstack:options": bstackOptions,
-        "appium:autoGrantPermissions": true,
-        "appium:app": process.env[envVarKey],
-        "appium:autoAcceptAlerts": true,
-        "appium:fullReset": true,
-        "appium:settings[snapshotMaxDepth]": 62,
-      },
+      capabilities,
     };
   }
 }
