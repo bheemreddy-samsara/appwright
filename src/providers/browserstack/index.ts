@@ -333,6 +333,40 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
       );
     }
     const permissionPrompts = deviceConfig?.permissionPrompts;
+
+    // Build CI-aware metadata for better traceability between CI builds and BrowserStack sessions
+    const ciBuildIdentifier =
+      process.env.BUILDKITE_BUILD_ID ||
+      process.env.GITHUB_RUN_ID ||
+      process.env.CI_JOB_ID || // GitLab CI
+      process.env.USER;
+
+    const ciBuildNumber =
+      process.env.BUILDKITE_BUILD_NUMBER ||
+      process.env.GITHUB_RUN_NUMBER ||
+      process.env.CI_PIPELINE_IID; // GitLab CI
+
+    const ciBranch =
+      process.env.BUILDKITE_BRANCH ||
+      process.env.GITHUB_REF_NAME ||
+      process.env.CI_COMMIT_REF_NAME; // GitLab CI
+
+    const ciCommit = (
+      process.env.BUILDKITE_COMMIT ||
+      process.env.GITHUB_SHA ||
+      process.env.CI_COMMIT_SHA
+    ) // GitLab CI
+      ?.substring(0, 7);
+
+    // Allow env var override, otherwise build a descriptive name with CI context
+    const defaultBuildName = ciBuildNumber
+      ? `${projectName} ${platformName} #${ciBuildNumber}${ciBranch ? ` (${ciBranch})` : ""}`
+      : `${projectName} ${platformName}`;
+
+    const defaultSessionName = ciCommit
+      ? `${projectName} ${platformName} test @ ${ciCommit}`
+      : `${projectName} ${platformName} test`;
+
     const bstackOptions: Record<string, unknown> = {
       debug: true,
       interactiveDebugging: true,
@@ -344,12 +378,9 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
       osVersion: deviceConfig.osVersion,
       platformName: platformName,
       deviceOrientation: deviceConfig?.orientation,
-      buildName: `${projectName} ${platformName}`,
-      sessionName: `${projectName} ${platformName} test`,
-      buildIdentifier:
-        process.env.GITHUB_ACTIONS === "true"
-          ? `CI ${process.env.GITHUB_RUN_ID}`
-          : process.env.USER,
+      buildName: process.env.BROWSERSTACK_BUILD_NAME || defaultBuildName,
+      sessionName: process.env.BROWSERSTACK_SESSION_NAME || defaultSessionName,
+      buildIdentifier: ciBuildIdentifier,
     };
 
     if (typeof deviceConfig?.appProfiling === "boolean") {
