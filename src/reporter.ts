@@ -60,10 +60,6 @@ class VideoDownloader implements Reporter {
         type: "workerInfo",
         description: `Ran on worker #${workerIndex}.`,
       });
-      const expectedVideoPath = path.join(
-        basePath(),
-        `worker-${workerIndex}-video.mp4`,
-      );
       // The `onTestEnd` is method is called before the worker ends and
       // the worker's `endTime` is saved to disk. We add a 5 secs delay
       // to prevent a harmful race condition.
@@ -82,6 +78,7 @@ class VideoDownloader implements Reporter {
           if (!this.providerSupportsVideo(providerName)) {
             return; // Nothing to do here
           }
+          const workerVideoBaseName = `worker-${workerIndex}-${sessionId}-video`;
           if (endTime) {
             // This is the last test in the worker, so let's download the video
             const provider = getProviderClass(providerName);
@@ -91,7 +88,7 @@ class VideoDownloader implements Reporter {
             } | null = await provider.downloadVideo(
               sessionId,
               basePath(),
-              `worker-${workerIndex}-video`,
+              workerVideoBaseName,
             );
             if (!downloaded) {
               return;
@@ -104,11 +101,15 @@ class VideoDownloader implements Reporter {
           } else {
             // This is an intermediate test in the worker, so let's wait for the
             // video file to be found on disk. Once it is, we trim and attach it.
-            await waitFor(() => fs.existsSync(expectedVideoPath));
+            const expectedWorkerVideoPath = path.join(
+              basePath(),
+              `${workerVideoBaseName}.mp4`,
+            );
+            await waitFor(() => fs.existsSync(expectedWorkerVideoPath));
             return this.trimAndAttachPersistentDeviceVideo(
               test,
               result,
-              expectedVideoPath,
+              expectedWorkerVideoPath,
             );
           }
         })
@@ -145,7 +146,8 @@ class VideoDownloader implements Reporter {
     } else {
       const trimSkipPoint =
         (testStart.getTime() - workerStart.getTime()) / 1000;
-      const trimmedFileName = `worker-${workerIdx}-trimmed-${test.id}.mp4`;
+      const retryIndex = result.retry ?? 0;
+      const trimmedFileName = `worker-${workerIdx}-trimmed-${test.id}-retry-${retryIndex}.mp4`;
       try {
         pathToAttach = await trimVideo({
           originalVideoPath: workerVideoPath,
@@ -174,7 +176,7 @@ class VideoDownloader implements Reporter {
     providerClass: any,
     sessionId: string,
   ) {
-    const videoFileName = `${test.id}`;
+    const videoFileName = `${sessionId}-${test.id}`;
     if (!providerClass.downloadVideo) {
       return;
     }
