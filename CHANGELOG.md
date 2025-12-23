@@ -1,5 +1,11 @@
 # appwright
 
+## 0.7.2
+
+### Patch Changes
+
+- ecdfc42: Avoid video filename collisions in the Playwright reporter by including the provider session ID in downloaded video filenames.
+
 ## 0.7.1
 
 ### Patch Changes
