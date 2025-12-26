@@ -32,6 +32,7 @@ export class Device {
   private deviceProvider?: DeviceProvider;
   private persistentSyncEnabled = false;
   private activePersistentKey?: string;
+  private cleanupCallback?: () => Promise<void>;
 
   constructor(
     private webDriverClient: WebDriverClient,
@@ -39,8 +40,10 @@ export class Device {
     private timeoutOpts: TimeoutOptions,
     private provider: string,
     deviceProvider?: DeviceProvider,
+    cleanupCallback?: () => Promise<void>,
   ) {
     this.deviceProvider = deviceProvider;
+    this.cleanupCallback = cleanupCallback;
   }
 
   attachDeviceProvider(provider: DeviceProvider): void {
@@ -238,6 +241,15 @@ export class Device {
     if (this.visualTraceService) {
       clearVisualTraceService();
       this.visualTraceService = undefined;
+    }
+
+    // Call the cleanup callback if provided
+    if (this.cleanupCallback) {
+      try {
+        await this.cleanupCallback();
+      } catch (e) {
+        logger.error(`cleanup callback error:`, e);
+      }
     }
   }
 
