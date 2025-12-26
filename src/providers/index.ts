@@ -4,6 +4,7 @@ import { LocalDeviceProvider } from "./local";
 import { EmulatorProvider } from "./emulator";
 import { FullProject } from "@playwright/test";
 import { LambdaTestDeviceProvider } from "./lambdatest";
+import { AWSDeviceFarmProvider } from "./awsDeviceFarm";
 
 export function getProviderClass(provider: string): any {
   switch (provider) {
@@ -15,6 +16,8 @@ export function getProviderClass(provider: string): any {
       return EmulatorProvider;
     case "local-device":
       return LocalDeviceProvider;
+    case "aws-device-farm":
+      return AWSDeviceFarmProvider;
     default:
       throw new Error(`Unknown device provider: ${provider}`);
   }
