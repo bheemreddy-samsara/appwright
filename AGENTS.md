@@ -2,7 +2,7 @@
 
 ## 1. Project Snapshot
 - **Repo type:** Single-package TypeScript library (no workspaces)
-- **Stack:** Node.js ≥20, TypeScript, Playwright fixtures, Vitest, ESLint (`@empiricalrun`)
+- **Stack:** Node.js ≥24.12, TypeScript, Playwright fixtures, Vitest, ESLint (`@empiricalrun`)
 - **Docs:** Each major directory ships its own `AGENTS.md`; nearest file wins
 
 ## 2. Root Setup Commands
