@@ -1,5 +1,11 @@
 # appwright
 
+## 0.7.4
+
+### Patch Changes
+
+- 802e517: Improve error handling on provider video downloads and update dependencies/formatting config to align lint with CI.
+
 ## 0.7.3
 
 ### Patch Changes
