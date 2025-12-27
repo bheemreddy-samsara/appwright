@@ -123,7 +123,7 @@ vi.mock("@aws-sdk/client-device-farm", () => {
   // Create mock command constructors that store their input
   const mockCommandConstructors: Record<string, Mock> = {};
   const createMockCommand = (name: string) => {
-    const mockConstructor = vi.fn((input?: Record<string, unknown>) => {
+    const mockConstructor = vi.fn(function (input?: Record<string, unknown>) {
       const command = { input, constructor: { name } };
       // Add the constructor as a property for instanceof checks
       Object.defineProperty(command, "constructor", {
@@ -171,10 +171,14 @@ vi.mock("@aws-sdk/client-sts", () => {
   mockSTSClientClass.prototype.send = vi.fn();
   mockSTSClientClass.prototype.destroy = vi.fn();
 
-  const mockAssumeRoleCommand = vi.fn((input?: Record<string, unknown>) => ({
-    input,
-    constructor: { name: "AssumeRoleCommand" },
-  }));
+  const mockAssumeRoleCommand = vi.fn(function (
+    input?: Record<string, unknown>,
+  ) {
+    return {
+      input,
+      constructor: { name: "AssumeRoleCommand" },
+    };
+  });
 
   return {
     STSClient: mockSTSClientClass,
@@ -214,9 +218,9 @@ describe("AWSDeviceFarmProvider", () => {
       send: vi.fn(),
       destroy: vi.fn(),
     };
-    vi.mocked(DeviceFarmClient).mockImplementation(
-      () => mockClient as unknown as DeviceFarmClient,
-    );
+    vi.mocked(DeviceFarmClient).mockImplementation(function () {
+      return mockClient as unknown as DeviceFarmClient;
+    });
 
     // Default fs mocks - use the default export since that's what the provider uses
     const fsModule = fs as FsModule;
@@ -934,9 +938,9 @@ describe("AWSDeviceFarmProvider", () => {
         send: vi.fn(),
         destroy: vi.fn(),
       };
-      vi.mocked(STSClientMock).mockImplementation(
-        () => mockStsClient as unknown as InstanceType<typeof STSClientMock>,
-      );
+      vi.mocked(STSClientMock).mockImplementation(function () {
+        return mockStsClient as unknown as InstanceType<typeof STSClientMock>;
+      });
     });
 
     test("assumes IAM role when roleArn is provided", async () => {
