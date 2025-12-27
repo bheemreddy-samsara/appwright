@@ -1,5 +1,11 @@
 # appwright
 
+## 0.9.1
+
+### Patch Changes
+
+- 5ba96b8: Upgrade Vitest to 4.0.16 and refresh lockfile; adjust AWS Device Farm test mocks to work with the new Vitest mocking behavior.
+
 ## 0.9.0
 
 ### Minor Changes
