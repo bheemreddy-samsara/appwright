@@ -32,7 +32,7 @@ Links to help you get started.
 
 ### Minimum requirements
 
-- Node 20.19.0 or higher (Appium 3 requirement)
+- Node 24.12.0 or higher (Appium 3 requirement)
 
 ### Install
 
