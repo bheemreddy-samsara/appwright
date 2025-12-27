@@ -1,5 +1,11 @@
 # appwright
 
+## 0.8.0
+
+### Minor Changes
+
+- 0c833cf: Raise the minimum supported Node.js version to 24.12.0 and align all CI workflows to use it.
+
 ## 0.7.4
 
 ### Patch Changes
