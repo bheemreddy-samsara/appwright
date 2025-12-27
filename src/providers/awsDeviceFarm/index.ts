@@ -529,9 +529,11 @@ export class AWSDeviceFarmProvider implements DeviceProvider {
           minTimeout: 5_000,
           maxTimeout: 15_000,
           onRetry: (error, attempt) => {
+            const message =
+              error instanceof Error ? error.message : String(error);
             if (attempt > 3) {
               logger.warn(
-                `AWS Device Farm: retrying video download (attempt ${attempt}): ${error.message}`,
+                `AWS Device Farm: retrying video download (attempt ${attempt}): ${message}`,
               );
             }
           },
@@ -539,7 +541,11 @@ export class AWSDeviceFarmProvider implements DeviceProvider {
       );
       return downloadResult;
     } catch (error) {
-      logger.error("AWS Device Farm: Failed to download video.", error);
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error(
+        `AWS Device Farm: Failed to download video. ${message}`,
+        error,
+      );
       return null;
     } finally {
       client.destroy();
