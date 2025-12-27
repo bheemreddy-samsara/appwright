@@ -1,5 +1,11 @@
 # appwright
 
+## 0.9.0
+
+### Minor Changes
+
+- 860279f: Upgrade to ESLint 9 and @empiricalrun/eslint-config 0.5 with flat config; add ignores and align lint rules for existing code.
+
 ## 0.8.0
 
 ### Minor Changes
