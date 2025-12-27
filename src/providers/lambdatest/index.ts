@@ -215,8 +215,9 @@ export class LambdaTestDeviceProvider implements DeviceProvider {
             retries: 10,
             minTimeout: 3_000,
             onRetry: (err, i) => {
+              const message = err instanceof Error ? err.message : String(err);
               if (i > 5) {
-                logger.warn(`Retry attempt ${i} failed: ${err.message}`);
+                logger.warn(`Retry attempt ${i} failed: ${message}`);
               }
             },
           },
@@ -231,14 +232,16 @@ export class LambdaTestDeviceProvider implements DeviceProvider {
               );
               resolve({ path: pathToTestVideo, contentType: "video/mp4" });
             } catch (err) {
-              logger.error(`Failed to rename file: `, err);
-              reject(err);
+              const message = err instanceof Error ? err.message : String(err);
+              logger.error(`Failed to rename file: ${message}`, err);
+              reject(err instanceof Error ? err : new Error(message));
             }
           });
 
           fileStream.on("error", (err) => {
-            logger.error(`Failed to write file: ${err.message}`);
-            reject(err);
+            const message = err instanceof Error ? err.message : String(err);
+            logger.error(`Failed to write file: ${message}`, err);
+            reject(err instanceof Error ? err : new Error(message));
           });
         });
       } else {
