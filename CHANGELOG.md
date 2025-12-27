@@ -1,5 +1,11 @@
 # appwright
 
+## 0.9.2
+
+### Patch Changes
+
+- 9313b99: Update webdriver to v9 and appium-uiautomator2-driver to v6 for provider compatibility.
+
 ## 0.9.1
 
 ### Patch Changes
