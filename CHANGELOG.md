@@ -1,5 +1,11 @@
 # appwright
 
+## 0.9.4
+
+### Patch Changes
+
+- 6d3048a: Update @empiricalrun/llm to 0.25.1.
+
 ## 0.9.3
 
 ### Patch Changes
