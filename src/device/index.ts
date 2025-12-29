@@ -378,6 +378,41 @@ export class Device {
   }
 
   /**
+   * Locate the first element matching an accessibility identifier or resource id.
+   * Uses XPath with a `[1]` index to avoid multiple element issues.
+   *
+   * **Usage:**
+   * ```js
+   * const element = device.getByIdFirst("signup_button");
+   * ```
+   *
+   * @param id identifier string to search for
+   * @returns
+   */
+  getByIdFirst(id: string): AppwrightLocator {
+    const isAndroid = this.getPlatform() === Platform.ANDROID;
+    const xpathValue = this.buildXpathLiteral(id);
+    const xpath = isAndroid
+      ? `(//*[@resource-id=${xpathValue}])[1]`
+      : `(//*[@name=${xpathValue}])[1]`;
+    return this.getByXpath(xpath);
+  }
+
+  private buildXpathLiteral(value: string): string {
+    if (!value.includes("'")) {
+      return `'${value}'`;
+    }
+
+    if (!value.includes('"')) {
+      return `"${value}"`;
+    }
+
+    const parts = value.split("'");
+    const literalParts = parts.map((part) => `'${part}'`);
+    return `concat(${literalParts.join(', "\'", ')})`;
+  }
+
+  /**
    * Locate an element on the screen with xpath.
    *
    * **Usage:**
