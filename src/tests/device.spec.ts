@@ -253,4 +253,48 @@ describe("Device", () => {
       expect(payload.reason).toBeUndefined();
     });
   });
+
+  describe("getByIdFirst", () => {
+    test("builds Android XPath with resource-id and first index", () => {
+      const { device } = createDevice();
+      vi.spyOn(device, "getPlatform").mockReturnValue(Platform.ANDROID);
+
+      const locator = device.getByIdFirst("nav-bar-left-button-content");
+      expect((locator as any).selector).toBe(
+        "(//*[@resource-id='nav-bar-left-button-content'])[1]",
+      );
+      expect((locator as any).findStrategy).toBe("xpath");
+    });
+
+    test("builds iOS XPath with name and first index", () => {
+      const { device } = createDevice();
+      vi.spyOn(device, "getPlatform").mockReturnValue(Platform.IOS);
+
+      const locator = device.getByIdFirst("nav-bar-left-button-content");
+      expect((locator as any).selector).toBe(
+        "(//*[@name='nav-bar-left-button-content'])[1]",
+      );
+      expect((locator as any).findStrategy).toBe("xpath");
+    });
+
+    test("escapes single quotes in ID", () => {
+      const { device } = createDevice();
+      vi.spyOn(device, "getPlatform").mockReturnValue(Platform.ANDROID);
+
+      const locator = device.getByIdFirst("user's-button");
+      expect((locator as any).selector).toBe(
+        '(//*[@resource-id="user\'s-button"])[1]',
+      );
+    });
+
+    test("escapes mixed quotes in ID", () => {
+      const { device } = createDevice();
+      vi.spyOn(device, "getPlatform").mockReturnValue(Platform.IOS);
+
+      const locator = device.getByIdFirst('he said "it\'s ok"');
+      expect((locator as any).selector).toBe(
+        `(//*[@name=concat('he said "it', "'", 's ok"')])[1]`,
+      );
+    });
+  });
 });
