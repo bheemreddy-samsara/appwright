@@ -1,5 +1,11 @@
 # appwright
 
+## 0.9.3
+
+### Patch Changes
+
+- 74ee3a0: Add a `device.getByIdFirst` locator helper for first-match accessibility IDs.
+
 ## 0.9.2
 
 ### Patch Changes
