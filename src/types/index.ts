@@ -126,6 +126,16 @@ export type BrowserStackConfig = {
   appiumVersion?: string;
 
   /**
+   * BrowserStack geolocation code (for example: "HK").
+   */
+  geoLocation?: string;
+
+  /**
+   * BrowserStack GPS location coordinates ("lat,long").
+   */
+  gpsLocation?: string;
+
+  /**
    * Enable BrowserStack App Performance profiling (appProfiling capability).
    * Defaults to false. When true, BrowserStack captures detailed performance metrics.
    */
@@ -137,6 +147,12 @@ export type BrowserStackConfig = {
    * Defaults to 180 seconds (3 minutes).
    */
   idleTimeout?: number;
+
+  /**
+   * Appium settings applied after session start via driver.updateSettings.
+   * Use to tune selector/idle behavior for flaky runs.
+   */
+  appiumSettings?: AppiumSettings;
 
   /**
    * iOS app settings to configure at session start.
@@ -294,6 +310,119 @@ export type AWSDeviceFarmConfig = {
 };
 
 /**
+ * Appium settings for controlling UIAutomator2/XCUITest behavior.
+ * These settings affect how Appium interacts with the device during automation.
+ */
+export type AppiumSettings = {
+  /**
+   * Maximum time (in milliseconds) that UIAutomator2 will wait for the UI to become idle
+   * before performing actions. Lower values speed up tests on apps with animations
+   * or dynamic content that never become truly "idle".
+   * Default: 10000 (10 seconds). Recommended for animated apps: 0-2000.
+   * Only applies to Android.
+   */
+  waitForIdleTimeout?: number;
+
+  /**
+   * Maximum time (in seconds) between Appium commands before the session times out.
+   * Useful for long-running tests or tests that include extended wait periods.
+   * Default: 60 seconds.
+   */
+  newCommandTimeout?: number;
+
+  /**
+   * Maximum depth of the element tree snapshot. Higher values capture more nested elements
+   * but may slow down element lookups on complex screens.
+   * Default: 50. Max recommended: 62.
+   * Only applies to Android.
+   */
+  snapshotMaxDepth?: number;
+
+  /**
+   * Maximum time (in milliseconds) to wait for an element to appear.
+   * Only applies to Android.
+   */
+  waitForSelectorTimeout?: number;
+
+  /**
+   * Timeout (in milliseconds) for UIAutomator2 action acknowledgments.
+   * Only applies to Android.
+   */
+  actionAcknowledgmentTimeout?: number;
+
+  /**
+   * Whether to ignore non-important views in the Android view hierarchy.
+   * Only applies to Android.
+   */
+  ignoreUnimportantViews?: boolean;
+
+  /**
+   * Snapshot timeout (in milliseconds) for Android UIAutomator2.
+   * Only applies to Android.
+   */
+  customSnapshotTimeout?: number;
+
+  /**
+   * Snapshot timeout (in milliseconds) for iOS XCUITest.
+   * Only applies to iOS.
+   */
+  snapshotTimeout?: number;
+
+  /**
+   * Whether to wait for app quiescence on iOS.
+   * Only applies to iOS.
+   */
+  waitForQuiescence?: boolean;
+
+  /**
+   * Cool-off timeout (in milliseconds) for animations on iOS.
+   * Only applies to iOS.
+   */
+  animationCoolOffTimeout?: number;
+
+  /**
+   * Reduce motion on iOS during automation.
+   * Only applies to iOS.
+   */
+  reduceMotion?: boolean;
+
+  /**
+   * Disable window animations on Android.
+   * Only applies to Android.
+   */
+  disableWindowAnimation?: boolean;
+
+  /**
+   * Skip device initialization to speed up Android sessions.
+   * Only applies to Android.
+   */
+  skipDeviceInitialization?: boolean;
+
+  /**
+   * Include Safari in webviews for iOS.
+   * Only applies to iOS.
+   */
+  includeSafariInWebviews?: boolean;
+
+  /**
+   * Allow Appium to auto-download Chromedriver binaries.
+   * Only applies to Android.
+   */
+  chromedriverAutodownload?: boolean;
+
+  /**
+   * BrowserStack page source sampling configuration.
+   * Only applies to BrowserStack.
+   */
+  bstackPageSource?: {
+    enable?: boolean;
+    samplesX?: number;
+    samplesY?: number;
+    maxDepth?: number;
+  };
+} & Record<string, unknown>;
+
+/**
  * Configuration for locally connected physical devices.
  */
 export type LocalDeviceConfig = {
@@ -310,6 +439,11 @@ export type LocalDeviceConfig = {
    * Default orientation is "portrait".
    */
   orientation?: DeviceOrientation;
+
+  /**
+   * Appium settings for controlling UIAutomator2/XCUITest behavior.
+   */
+  appiumSettings?: AppiumSettings;
 };
 
 /**
@@ -330,6 +464,11 @@ export type EmulatorConfig = {
    * Default orientation is "portrait".
    */
   orientation?: DeviceOrientation;
+
+  /**
+   * Appium settings for controlling UIAutomator2/XCUITest behavior.
+   */
+  appiumSettings?: AppiumSettings;
 };
 
 /**

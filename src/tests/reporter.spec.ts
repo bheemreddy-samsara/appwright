@@ -89,6 +89,7 @@ afterEach(async () => {
 
   getProviderClassMock.mockClear();
   vi.useRealTimers();
+  delete process.env.APPWRIGHT_DISABLE_VIDEO_DOWNLOAD;
 
   if (basePathToDelete) {
     await fs.rm(basePathToDelete, { recursive: true, force: true });
@@ -220,5 +221,58 @@ describe("VideoDownloader", () => {
         path: expect.stringContaining(`-retry-1.mp4`),
       },
     ]);
+  });
+
+  test("skips BrowserStack video handling when video download is disabled", async () => {
+    vi.useFakeTimers();
+    process.env.APPWRIGHT_DISABLE_VIDEO_DOWNLOAD = "true";
+    mockBasePath = await fs.mkdtemp(
+      path.join(os.tmpdir(), "appwright-videos-"),
+    );
+
+    const workerIndex = 0;
+    const sessionId = "session-xyz";
+    const providerName = "browserstack";
+
+    const workerStart = new Date("2025-01-01T00:00:00.000Z");
+
+    await fs.writeFile(
+      path.join(mockBasePath, `worker-info-${workerIndex}.json`),
+      JSON.stringify(
+        {
+          idx: workerIndex,
+          sessionId,
+          providerName,
+          startTime: {
+            beforeAppiumSession: workerStart.toISOString(),
+            afterAppiumSession: workerStart.toISOString(),
+          },
+          tests: [],
+        },
+        null,
+        2,
+      ),
+    );
+
+    const reporter = new VideoDownloader();
+    const testCase = {
+      id: "test-1",
+      title: "persistent",
+      annotations: [],
+    } as any;
+    const testResult = {
+      workerIndex,
+      duration: 1,
+      startTime: new Date("2025-01-01T00:00:10.000Z"),
+      attachments: [],
+    } as any;
+
+    reporter.onTestEnd(testCase, testResult);
+
+    await vi.advanceTimersByTimeAsync(5000);
+    await reporter.onEnd();
+
+    expect(downloadVideoMock).not.toHaveBeenCalled();
+    expect(testResult.attachments).toEqual([]);
   });
 });

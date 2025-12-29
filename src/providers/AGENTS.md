@@ -25,6 +25,9 @@ npm test -- src/tests/device.spec.ts
   - ✅ Upload local/HTTP/S3 builds via `globalSetup`; see new S3 helper in `src/providers/browserstack/s3.ts`
   - ✅ Keep session sync details current (`syncTestDetails`); tested in `src/tests/device.spec.ts`
   - ✅ Configure `permissionPrompts` on `BrowserStackConfig` to control Android auto-grant and iOS alert handling (iOS 13+ flips accept/dismiss capabilities)
+  - ✅ Optional `geoLocation`/`gpsLocation` and `appiumSettings` are available on `BrowserStackConfig` for device tuning (includes Appium settings like `waitForSelectorTimeout`, `includeSafariInWebviews`, `chromedriverAutodownload`)
+  - ✅ Set `APPWRIGHT_DISABLE_VIDEO_DOWNLOAD=true` to skip BrowserStack video downloads
+  - ✅ `appiumSettings` are filtered by platform; Android-only keys (ex: `snapshotMaxDepth`, `waitForIdleTimeout`) are not applied to iOS
   - ❌ Don’t ignore AWS region—`AWS_REGION` or `AWS_DEFAULT_REGION` must be present for S3 downloads
 - **LambdaTest:** mirror BrowserStack capabilities; follow structure in `src/providers/lambdatest/index.ts`
 - **Emulator & Local:** rely on Appium bootstrap in `src/providers/appium.ts`; ensure shutdown via `stopAppiumServer`

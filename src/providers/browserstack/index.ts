@@ -12,6 +12,10 @@ import { FullProject } from "@playwright/test";
 import { Device } from "../../device";
 import { logger } from "../../logger";
 import { downloadS3Artifact, isS3Uri, type DownloadedS3Artifact } from "./s3";
+import {
+  applyAppiumSettingsToCapabilities,
+  buildAppiumUpdateSettings,
+} from "../appiumSettings";
 
 type BrowserStackSessionDetails = {
   name: string;
@@ -172,6 +176,23 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
   private async createDriver(config: any): Promise<Device> {
     const WebDriver = (await import("webdriver")).default;
     const webDriverClient = await WebDriver.newSession(config);
+    const deviceConfig = this.project.use.device as BrowserStackConfig;
+    const platformName = this.project.use.platform;
+    const updateSettings = buildAppiumUpdateSettings(
+      deviceConfig?.appiumSettings,
+      platformName,
+    );
+    if (updateSettings) {
+      try {
+        await webDriverClient.updateSettings(updateSettings);
+        logger.log("Applied Appium settings via updateSettings.");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(
+          `Failed to apply appiumSettings via updateSettings: ${message}`,
+        );
+      }
+    }
     this.sessionId = webDriverClient.sessionId;
     const bundleId = await this.getAppBundleIdFromSession();
     const testOptions = {
@@ -201,6 +222,12 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
     outputDir: string,
     fileName: string,
   ): Promise<{ path: string; contentType: string } | null> {
+    if (process.env.APPWRIGHT_DISABLE_VIDEO_DOWNLOAD === "true") {
+      logger.log(
+        "BrowserStack video download disabled via APPWRIGHT_DISABLE_VIDEO_DOWNLOAD.",
+      );
+      return null;
+    }
     const sessionData = await getSessionDetails(sessionId);
     const sessionDetails = sessionData?.automation_session;
     const videoURL = sessionDetails?.video_url;
@@ -389,6 +416,14 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
       bstackOptions.appProfiling = deviceConfig.appProfiling;
     }
 
+    if (deviceConfig?.geoLocation) {
+      bstackOptions.geoLocation = deviceConfig.geoLocation;
+    }
+
+    if (deviceConfig?.gpsLocation) {
+      bstackOptions.gpsLocation = deviceConfig.gpsLocation;
+    }
+
     // iOS App Settings support (capability-based for session start)
     if (platformName === Platform.IOS) {
       // Support environment variable override for CI/CD
@@ -425,8 +460,22 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
       "bstack:options": bstackOptions,
       "appium:app": process.env[envVarKey],
       "appium:fullReset": true,
-      "appium:settings[snapshotMaxDepth]": 62,
     };
+
+    if (platformName === Platform.ANDROID) {
+      capabilities["appium:settings[snapshotMaxDepth]"] =
+        deviceConfig.appiumSettings?.snapshotMaxDepth ?? 62;
+    }
+
+    applyAppiumSettingsToCapabilities(
+      capabilities,
+      deviceConfig.appiumSettings,
+      platformName,
+      {
+        includeBrowserStackSettings: true,
+        includeUpdateSettingsCapabilities: false,
+      },
+    );
 
     if (platformName === Platform.ANDROID) {
       const grantPreference = permissionPrompts?.android?.grantPermissions;

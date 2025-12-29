@@ -43,8 +43,10 @@ class VideoDownloader implements Reporter {
       // This is a test that ran with the `device` fixture
       const sessionId = sessionIdAnnotation.description;
       const providerName = providerNameAnnotation.description;
-      const provider = getProviderClass(providerName!);
-      this.downloadAndAttachDeviceVideo(test, result, provider, sessionId!);
+      if (this.providerSupportsVideo(providerName!)) {
+        const provider = getProviderClass(providerName!);
+        this.downloadAndAttachDeviceVideo(test, result, provider, sessionId!);
+      }
       const otherAnnotations = test.annotations.filter(
         ({ type }) => type !== "sessionId" && type !== "providerName",
       );
@@ -63,55 +65,64 @@ class VideoDownloader implements Reporter {
       // The `onTestEnd` is method is called before the worker ends and
       // the worker's `endTime` is saved to disk. We add a 5 secs delay
       // to prevent a harmful race condition.
-      const workerDownload = waitFiveSeconds()
-        .then(() => getWorkerInfo(workerIndex))
-        .then(async (workerInfo) => {
-          if (!workerInfo) {
-            throw new Error(`Worker info not found for idx: ${workerIndex}`);
+      const workerDownload = getWorkerInfo(workerIndex)
+        .then((initialWorkerInfo) => {
+          const providerName = initialWorkerInfo?.providerName;
+          if (providerName && !this.providerSupportsVideo(providerName)) {
+            return;
           }
-          const { providerName, sessionId, endTime } = workerInfo;
-          if (!providerName || !sessionId) {
-            throw new Error(
-              `Provider name or session id not found for worker: ${workerIndex}`,
-            );
-          }
-          if (!this.providerSupportsVideo(providerName)) {
-            return; // Nothing to do here
-          }
-          const workerVideoBaseName = `worker-${workerIndex}-${sessionId}-video`;
-          if (endTime) {
-            // This is the last test in the worker, so let's download the video
-            const provider = getProviderClass(providerName);
-            const downloaded: {
-              path: string;
-              contentType: string;
-            } | null = await provider.downloadVideo(
-              sessionId,
-              basePath(),
-              workerVideoBaseName,
-            );
-            if (!downloaded) {
-              return;
-            }
-            return this.trimAndAttachPersistentDeviceVideo(
-              test,
-              result,
-              downloaded.path,
-            );
-          } else {
-            // This is an intermediate test in the worker, so let's wait for the
-            // video file to be found on disk. Once it is, we trim and attach it.
-            const expectedWorkerVideoPath = path.join(
-              basePath(),
-              `${workerVideoBaseName}.mp4`,
-            );
-            await waitFor(() => fs.existsSync(expectedWorkerVideoPath));
-            return this.trimAndAttachPersistentDeviceVideo(
-              test,
-              result,
-              expectedWorkerVideoPath,
-            );
-          }
+          return waitFiveSeconds()
+            .then(() => getWorkerInfo(workerIndex))
+            .then(async (workerInfo) => {
+              if (!workerInfo) {
+                throw new Error(
+                  `Worker info not found for idx: ${workerIndex}`,
+                );
+              }
+              const { providerName, sessionId, endTime } = workerInfo;
+              if (!providerName || !sessionId) {
+                throw new Error(
+                  `Provider name or session id not found for worker: ${workerIndex}`,
+                );
+              }
+              if (!this.providerSupportsVideo(providerName)) {
+                return; // Nothing to do here
+              }
+              const workerVideoBaseName = `worker-${workerIndex}-${sessionId}-video`;
+              if (endTime) {
+                // This is the last test in the worker, so let's download the video
+                const provider = getProviderClass(providerName);
+                const downloaded: {
+                  path: string;
+                  contentType: string;
+                } | null = await provider.downloadVideo(
+                  sessionId,
+                  basePath(),
+                  workerVideoBaseName,
+                );
+                if (!downloaded) {
+                  return;
+                }
+                return this.trimAndAttachPersistentDeviceVideo(
+                  test,
+                  result,
+                  downloaded.path,
+                );
+              } else {
+                // This is an intermediate test in the worker, so let's wait for the
+                // video file to be found on disk. Once it is, we trim and attach it.
+                const expectedWorkerVideoPath = path.join(
+                  basePath(),
+                  `${workerVideoBaseName}.mp4`,
+                );
+                await waitFor(() => fs.existsSync(expectedWorkerVideoPath));
+                return this.trimAndAttachPersistentDeviceVideo(
+                  test,
+                  result,
+                  expectedWorkerVideoPath,
+                );
+              }
+            });
         })
         .catch((e) => {
           logger.error("Failed to get worker end time:", e);
@@ -196,6 +207,12 @@ class VideoDownloader implements Reporter {
   }
 
   private providerSupportsVideo(providerName: string) {
+    if (
+      providerName === "browserstack" &&
+      process.env.APPWRIGHT_DISABLE_VIDEO_DOWNLOAD === "true"
+    ) {
+      return false;
+    }
     const provider = getProviderClass(providerName);
     return !!provider.downloadVideo;
   }
