@@ -16,6 +16,7 @@
     "lint": "eslint .",
     "test": "vitest --config ./src/tests/vitest.config.mts",
     "build": "tsc --build",
+    "postinstall": "node scripts/ensure-sharp-libvips.js",
     "changeset": "changeset",
     "clean": "tsc --build --clean",
     "release": "changeset publish",

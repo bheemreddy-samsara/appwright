@@ -15,6 +15,7 @@ export default [
       "test-results/**",
       "extension-src/**",
       "example/**",
+      "scripts/**",
       "eslint.config.mjs",
     ],
   },
