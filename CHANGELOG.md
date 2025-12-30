@@ -1,5 +1,11 @@
 # appwright
 
+## 0.9.5
+
+### Patch Changes
+
+- 54550f4: Pin webdriver, appium-uiautomator2-driver, and appium-xcuitest-driver to pre-WDIO v9 compatible versions.
+
 ## 0.9.4
 
 ### Patch Changes
