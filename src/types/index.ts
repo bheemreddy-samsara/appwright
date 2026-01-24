@@ -294,6 +294,36 @@ export type AWSDeviceFarmConfig = {
 };
 
 /**
+ * Appium settings for controlling UIAutomator2/XCUITest behavior.
+ * These settings affect how Appium interacts with the device during automation.
+ */
+export type AppiumSettings = {
+  /**
+   * Maximum time (in milliseconds) that UIAutomator2 will wait for the UI to become idle
+   * before performing actions. Lower values speed up tests on apps with animations
+   * or dynamic content that never become truly "idle".
+   * Default: 10000 (10 seconds). Recommended for animated apps: 0-2000.
+   * Only applies to Android.
+   */
+  waitForIdleTimeout?: number;
+
+  /**
+   * Maximum time (in seconds) between Appium commands before the session times out.
+   * Useful for long-running tests or tests that include extended wait periods.
+   * Default: 60 seconds.
+   */
+  newCommandTimeout?: number;
+
+  /**
+   * Maximum depth of the element tree snapshot. Higher values capture more nested elements
+   * but may slow down element lookups on complex screens.
+   * Default: 50. Max recommended: 62.
+   * Only applies to Android.
+   */
+  snapshotMaxDepth?: number;
+};
+
+/**
  * Configuration for locally connected physical devices.
  */
 export type LocalDeviceConfig = {
@@ -310,6 +340,11 @@ export type LocalDeviceConfig = {
    * Default orientation is "portrait".
    */
   orientation?: DeviceOrientation;
+
+  /**
+   * Appium settings for controlling UIAutomator2/XCUITest behavior.
+   */
+  appiumSettings?: AppiumSettings;
 };
 
 /**
@@ -330,6 +365,11 @@ export type EmulatorConfig = {
    * Default orientation is "portrait".
    */
   orientation?: DeviceOrientation;
+
+  /**
+   * Appium settings for controlling UIAutomator2/XCUITest behavior.
+   */
+  appiumSettings?: AppiumSettings;
 };
 
 /**

@@ -91,7 +91,9 @@ Follow the steps mentioned in ${androidSimulatorConfigDocLink} to run test on An
 
   private async createConfig() {
     const platformName = this.project.use.platform;
-    const udid = (this.project.use.device as EmulatorConfig).udid;
+    const deviceConfig = this.project.use.device as EmulatorConfig;
+    const udid = deviceConfig.udid;
+    const appiumSettings = deviceConfig.appiumSettings;
     let appPackageName: string | undefined;
     let appLaunchableActivity: string | undefined;
 
@@ -102,26 +104,43 @@ Follow the steps mentioned in ${androidSimulatorConfigDocLink} to run test on An
       appPackageName = packageName!;
       appLaunchableActivity = launchableActivity!;
     }
+
+    // Build capabilities with configurable appium settings
+    const capabilities: Record<string, unknown> = {
+      "appium:deviceName": deviceConfig.name,
+      "appium:udid": udid,
+      "appium:automationName":
+        platformName == Platform.ANDROID ? "uiautomator2" : "xcuitest",
+      "appium:platformVersion": deviceConfig.osVersion,
+      "appium:appActivity": appLaunchableActivity,
+      "appium:appPackage": appPackageName,
+      platformName: platformName,
+      "appium:autoGrantPermissions": true,
+      "appium:app": this.project.use.buildPath,
+      "appium:autoAcceptAlerts": true,
+      "appium:fullReset": true,
+      "appium:deviceOrientation": deviceConfig.orientation,
+      "appium:settings[snapshotMaxDepth]":
+        appiumSettings?.snapshotMaxDepth ?? 62,
+      "appium:wdaLaunchTimeout": 300_000,
+    };
+
+    // Apply configurable appium settings
+    if (appiumSettings?.newCommandTimeout !== undefined) {
+      capabilities["appium:newCommandTimeout"] =
+        appiumSettings.newCommandTimeout;
+    }
+    if (
+      platformName == Platform.ANDROID &&
+      appiumSettings?.waitForIdleTimeout !== undefined
+    ) {
+      capabilities["appium:settings[waitForIdleTimeout]"] =
+        appiumSettings.waitForIdleTimeout;
+    }
+
     return {
       port: 4723,
-      capabilities: {
-        "appium:deviceName": this.project.use.device?.name,
-        "appium:udid": udid,
-        "appium:automationName":
-          platformName == Platform.ANDROID ? "uiautomator2" : "xcuitest",
-        "appium:platformVersion": (this.project.use.device as EmulatorConfig)
-          .osVersion,
-        "appium:appActivity": appLaunchableActivity,
-        "appium:appPackage": appPackageName,
-        platformName: platformName,
-        "appium:autoGrantPermissions": true,
-        "appium:app": this.project.use.buildPath,
-        "appium:autoAcceptAlerts": true,
-        "appium:fullReset": true,
-        "appium:deviceOrientation": this.project.use.device?.orientation,
-        "appium:settings[snapshotMaxDepth]": 62,
-        "appium:wdaLaunchTimeout": 300_000,
-      },
+      capabilities,
     };
   }
 }

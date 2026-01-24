@@ -80,6 +80,8 @@ export class LocalDeviceProvider implements DeviceProvider {
 
   private async createConfig() {
     const platformName = this.project.use.platform;
+    const deviceConfig = this.project.use.device as LocalDeviceConfig;
+    const appiumSettings = deviceConfig.appiumSettings;
     let appPackageName: string | undefined;
     let appLaunchableActivity: string | undefined;
 
@@ -90,7 +92,7 @@ export class LocalDeviceProvider implements DeviceProvider {
       appPackageName = packageName!;
       appLaunchableActivity = launchableActivity!;
     }
-    let udid = (this.project.use.device as LocalDeviceConfig).udid;
+    let udid = deviceConfig.udid;
     if (!udid) {
       if (platformName == Platform.IOS) {
         udid = await getConnectedIOSDeviceUDID();
@@ -98,29 +100,47 @@ export class LocalDeviceProvider implements DeviceProvider {
         const activeAndroidDevices = await getActiveAndroidDevices();
         if (activeAndroidDevices > 1) {
           logger.warn(
-            `Multiple active devices detected. Selecting one for the test. 
+            `Multiple active devices detected. Selecting one for the test.
 To specify a device, use the udid property. Run "adb devices" to get the UDID for active devices.`,
           );
         }
       }
     }
+
+    // Build capabilities with configurable appium settings
+    const capabilities: Record<string, unknown> = {
+      "appium:deviceName": deviceConfig.name,
+      "appium:udid": udid,
+      "appium:automationName":
+        platformName == Platform.ANDROID ? "uiautomator2" : "xcuitest",
+      platformName: platformName,
+      "appium:autoGrantPermissions": true,
+      "appium:app": this.project.use.buildPath,
+      "appium:appActivity": appLaunchableActivity,
+      "appium:appPackage": appPackageName,
+      "appium:autoAcceptAlerts": true,
+      "appium:fullReset": true,
+      "appium:deviceOrientation": deviceConfig.orientation,
+      "appium:settings[snapshotMaxDepth]":
+        appiumSettings?.snapshotMaxDepth ?? 62,
+    };
+
+    // Apply configurable appium settings
+    if (appiumSettings?.newCommandTimeout !== undefined) {
+      capabilities["appium:newCommandTimeout"] =
+        appiumSettings.newCommandTimeout;
+    }
+    if (
+      platformName == Platform.ANDROID &&
+      appiumSettings?.waitForIdleTimeout !== undefined
+    ) {
+      capabilities["appium:settings[waitForIdleTimeout]"] =
+        appiumSettings.waitForIdleTimeout;
+    }
+
     return {
       port: 4723,
-      capabilities: {
-        "appium:deviceName": this.project.use.device?.name,
-        "appium:udid": udid,
-        "appium:automationName":
-          platformName == Platform.ANDROID ? "uiautomator2" : "xcuitest",
-        platformName: platformName,
-        "appium:autoGrantPermissions": true,
-        "appium:app": this.project.use.buildPath,
-        "appium:appActivity": appLaunchableActivity,
-        "appium:appPackage": appPackageName,
-        "appium:autoAcceptAlerts": true,
-        "appium:fullReset": true,
-        "appium:deviceOrientation": this.project.use.device?.orientation,
-        "appium:settings[snapshotMaxDepth]": 62,
-      },
+      capabilities,
     };
   }
 }
