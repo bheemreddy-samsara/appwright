@@ -234,6 +234,40 @@ npm run extract:app
 npx appwright test --project ios
 ```
 
+## GPT Driver Integration
+
+Appwright supports [GPT Driver](https://docs.mobileboost.io/gpt-driver-sdk) for AI-powered test automation. This enables natural language commands and AI assertions.
+
+### Setup
+
+Set the `GPT_DRIVER_API_KEY` environment variable:
+
+```sh
+export GPT_DRIVER_API_KEY=your-api-key
+```
+
+### Usage
+
+```ts
+import { test } from "@samsara-dev/appwright";
+
+test("User can add item to cart", async ({ device }) => {
+  // Natural language commands
+  await device.gptDriver.aiExecute("tap on the login button");
+  await device.gptDriver.aiExecute("enter 'admin' in the username field");
+
+  // AI-powered assertions
+  await device.gptDriver.assert("welcome message is visible");
+  await device.gptDriver.assert("cart shows 1 item");
+});
+```
+
+### Data Privacy Notice
+
+GPT Driver sends screenshots to Mobileboost's external API for AI processing. Do not use GPT Driver in tests that handle sensitive data displayed on screen.
+
+Tests skip automatically when `GPT_DRIVER_API_KEY` is not set.
+
 ## Docs
 
 - [Basics](docs/basics.md)

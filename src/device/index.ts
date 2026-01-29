@@ -12,6 +12,7 @@ import {
   VisualTraceConfig,
 } from "../types";
 import { AppwrightVision, VisionProvider } from "../vision";
+import { GptDriverProvider } from "../gptDriver";
 import { boxedStep, longestDeterministicGroup } from "../utils";
 import { uploadImageToBS } from "../providers/browserstack/utils";
 import { uploadImageToLambdaTest } from "../providers/lambdatest/utils";
@@ -33,6 +34,7 @@ export class Device {
   private persistentSyncEnabled = false;
   private activePersistentKey?: string;
   private cleanupCallback?: () => Promise<void>;
+  private _gptDriverProvider: GptDriverProvider | null = null;
 
   constructor(
     private webDriverClient: WebDriverClient,
@@ -216,6 +218,48 @@ export class Device {
       },
     ): Promise<ExtractType<T>> => {
       return await this.vision().query(prompt, options);
+    },
+  };
+
+  private gptDriverProvider(): GptDriverProvider {
+    if (!this._gptDriverProvider) {
+      this._gptDriverProvider = new GptDriverProvider(this.webDriverClient);
+    }
+    return this._gptDriverProvider;
+  }
+
+  /**
+   * GPT Driver AI-powered test automation.
+   * Requires GPT_DRIVER_API_KEY environment variable.
+   *
+   * Note: Screenshots are sent to GPT Driver's external API for AI processing.
+   *
+   * **Usage:**
+   * ```js
+   * await device.gptDriver.aiExecute("tap on the login button");
+   * await device.gptDriver.assert("welcome message is visible");
+   * await device.gptDriver.assertBulk(["button is visible", "text shows 'Hello'"]);
+   * const results = await device.gptDriver.checkBulk(["logged in", "menu open"]);
+   * const data = await device.gptDriver.extract(["total price", "item count"]);
+   * ```
+   */
+  gptDriver = {
+    aiExecute: async (instruction: string): Promise<void> => {
+      return await this.gptDriverProvider().aiExecute(instruction);
+    },
+    assert: async (condition: string): Promise<void> => {
+      return await this.gptDriverProvider().assert(condition);
+    },
+    assertBulk: async (conditions: string[]): Promise<void> => {
+      return await this.gptDriverProvider().assertBulk(conditions);
+    },
+    checkBulk: async (
+      conditions: string[],
+    ): Promise<Record<string, boolean>> => {
+      return await this.gptDriverProvider().checkBulk(conditions);
+    },
+    extract: async (extractions: string[]): Promise<Record<string, any>> => {
+      return await this.gptDriverProvider().extract(extractions);
     },
   };
 
