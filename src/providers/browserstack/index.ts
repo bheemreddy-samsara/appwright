@@ -249,6 +249,9 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
     //To catch the browserstack error in case all retries fails
     try {
       if (videoURL) {
+        logger.log(
+          `[${new Date().toISOString()}] Video download starting: ${videoURL}`,
+        );
         await retry(
           async () => {
             const response = await fetch(videoURL, {
@@ -277,11 +280,12 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
           {
             retries: 10,
             minTimeout: 3_000,
+            maxTimeout: 60_000,
             onRetry: (err, i) => {
               const message = err instanceof Error ? err.message : String(err);
-              if (i > 5) {
-                logger.warn(`Retry attempt ${i} failed: ${message}`);
-              }
+              logger.warn(
+                `[${new Date().toISOString()}] Video download retry ${i}/10 failed: ${message}`,
+              );
             },
           },
         );
@@ -291,7 +295,7 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
             try {
               fs.renameSync(tempPathForWriting, pathToTestVideo);
               logger.log(
-                `Download finished and file closed: ${pathToTestVideo}`,
+                `[${new Date().toISOString()}] Video download completed: ${pathToTestVideo}`,
               );
               resolve({ path: pathToTestVideo, contentType: "video/mp4" });
             } catch (err) {
@@ -311,7 +315,10 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
         return null;
       }
     } catch (e) {
-      logger.log(`Error Downloading video: `, e);
+      const message = e instanceof Error ? e.message : String(e);
+      logger.warn(
+        `[${new Date().toISOString()}] Video download failed after all retries: ${message}. Test will complete without video attachment.`,
+      );
       return null;
     }
   }
