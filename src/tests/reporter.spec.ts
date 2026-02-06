@@ -182,7 +182,8 @@ describe("VideoDownloader", () => {
       mockBasePath,
       `${workerVideoBaseName}.mp4`,
     );
-    await fs.writeFile(downloadedVideoPath, "video-bytes");
+    // Include a fake moov atom so validateMp4 passes
+    await fs.writeFile(downloadedVideoPath, "fake-video-moov-marker");
 
     downloadVideoMock.mockResolvedValueOnce({
       path: downloadedVideoPath,
@@ -221,6 +222,97 @@ describe("VideoDownloader", () => {
         path: expect.stringContaining(`-retry-1.mp4`),
       },
     ]);
+  });
+
+  test("falls back to full video when downloaded MP4 is corrupt (missing moov atom)", async () => {
+    vi.useFakeTimers();
+    mockBasePath = await fs.mkdtemp(
+      path.join(os.tmpdir(), "appwright-videos-"),
+    );
+
+    const workerIndex = 0;
+    const sessionId = "session-corrupt";
+    const providerName = "browserstack";
+    const workerVideoBaseName = `worker-${workerIndex}-${sessionId}-video`;
+
+    const workerStart = new Date("2025-01-01T00:00:00.000Z");
+    const testStart = new Date("2025-01-01T00:00:10.000Z");
+
+    await fs.writeFile(
+      path.join(mockBasePath, `worker-info-${workerIndex}.json`),
+      JSON.stringify(
+        {
+          idx: workerIndex,
+          sessionId,
+          providerName,
+          startTime: {
+            beforeAppiumSession: workerStart.toISOString(),
+            afterAppiumSession: workerStart.toISOString(),
+          },
+          endTime: new Date("2025-01-01T00:00:20.000Z").toISOString(),
+          tests: [],
+        },
+        null,
+        2,
+      ),
+    );
+
+    const downloadedVideoPath = path.join(
+      mockBasePath,
+      `${workerVideoBaseName}.mp4`,
+    );
+    // Write a file WITHOUT moov atom — simulates an incomplete BrowserStack download
+    await fs.writeFile(downloadedVideoPath, "corrupt-partial-video-data");
+
+    downloadVideoMock.mockResolvedValueOnce({
+      path: downloadedVideoPath,
+      contentType: "video/mp4",
+    });
+
+    const { logger } = await import("../logger.js");
+
+    const reporter = new VideoDownloader();
+    const testCase = {
+      id: "test-corrupt",
+      title: "corrupt video test",
+      annotations: [] as { type: string; description?: string }[],
+    } as any;
+    const testResult = {
+      workerIndex,
+      duration: 5000,
+      startTime: testStart,
+      retry: 0,
+      attachments: [],
+    } as any;
+
+    reporter.onTestEnd(testCase, testResult);
+
+    await vi.advanceTimersByTimeAsync(5000);
+    await reporter.onEnd();
+
+    // Should fall back to attaching the full untrimmed video
+    expect(testResult.attachments).toMatchObject([
+      {
+        contentType: "video/mp4",
+        name: "video",
+        path: downloadedVideoPath,
+      },
+    ]);
+
+    // Should annotate the test with a videoError explaining the fallback
+    const videoErrorAnnotation = testCase.annotations.find(
+      (a: { type: string }) => a.type === "videoError",
+    );
+    expect(videoErrorAnnotation).toBeDefined();
+    expect(videoErrorAnnotation!.description).toContain("Unable to trim video");
+
+    // Should log the trim failure
+    expect(logger.error).toHaveBeenCalledWith(
+      "Failed to trim video:",
+      expect.objectContaining({
+        message: expect.stringContaining("missing moov atom"),
+      }),
+    );
   });
 
   test("skips BrowserStack video handling when video download is disabled", async () => {
