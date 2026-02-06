@@ -1,5 +1,11 @@
 # appwright
 
+## 0.9.8
+
+### Patch Changes
+
+- eb8aea2: Cap video download retry backoff at 60s and add timestamps to all download logs
+
 ## 0.9.7
 
 ### Patch Changes

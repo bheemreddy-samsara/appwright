@@ -1,6 +1,6 @@
 {
   "name": "@samsara-dev/appwright",
-  "version": "0.9.7",
+  "version": "0.9.8",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
