@@ -245,7 +245,6 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
      * of 10 retries, whichever comes first.
      */
     await new Promise((resolve) => setTimeout(resolve, 10_000));
-    const fileStream = fs.createWriteStream(tempPathForWriting);
     //To catch the browserstack error in case all retries fails
     try {
       if (videoURL) {
@@ -267,15 +266,30 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
             if (!reader) {
               throw new Error("Failed to get reader from response body.");
             }
-            const streamToFile = async () => {
+            // Create a fresh write stream on each attempt to avoid
+            // appending corrupt data from previous failed retries
+            const fileStream = fs.createWriteStream(tempPathForWriting);
+            // Register finish/error listeners before any writes so errors
+            // during the loop are captured and finish always resolves.
+            const streamDone = new Promise<void>((resolve, reject) => {
+              fileStream.on("finish", resolve);
+              fileStream.on("error", reject);
+            });
+            try {
               while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                fileStream.write(value);
+                if (!fileStream.write(value)) {
+                  // Back-pressure: wait for drain before continuing
+                  await new Promise<void>((r) => fileStream.once("drain", r));
+                }
               }
-            };
-            await streamToFile();
-            fileStream.close();
+              fileStream.end();
+              await streamDone;
+            } catch (err) {
+              fileStream.destroy();
+              throw err;
+            }
           },
           {
             retries: 10,
@@ -289,28 +303,11 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
             },
           },
         );
-        return new Promise((resolve, reject) => {
-          // Ensure file stream is closed even in case of an error
-          fileStream.on("finish", () => {
-            try {
-              fs.renameSync(tempPathForWriting, pathToTestVideo);
-              logger.log(
-                `[${new Date().toISOString()}] Video download completed: ${pathToTestVideo}`,
-              );
-              resolve({ path: pathToTestVideo, contentType: "video/mp4" });
-            } catch (err) {
-              const message = err instanceof Error ? err.message : String(err);
-              logger.error(`Failed to rename file: ${message}`, err);
-              reject(err instanceof Error ? err : new Error(message));
-            }
-          });
-
-          fileStream.on("error", (err) => {
-            const message = err instanceof Error ? err.message : String(err);
-            logger.error(`Failed to write file: ${message}`, err);
-            reject(err instanceof Error ? err : new Error(message));
-          });
-        });
+        fs.renameSync(tempPathForWriting, pathToTestVideo);
+        logger.log(
+          `[${new Date().toISOString()}] Video download completed: ${pathToTestVideo}`,
+        );
+        return { path: pathToTestVideo, contentType: "video/mp4" };
       } else {
         return null;
       }
