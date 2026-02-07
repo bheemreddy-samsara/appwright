@@ -367,4 +367,66 @@ describe("VideoDownloader", () => {
     expect(downloadVideoMock).not.toHaveBeenCalled();
     expect(testResult.attachments).toEqual([]);
   });
+
+  test("skips video gracefully when worker has no session (e.g., skipped test)", async () => {
+    vi.useFakeTimers();
+    mockBasePath = await fs.mkdtemp(
+      path.join(os.tmpdir(), "appwright-videos-"),
+    );
+
+    const workerIndex = 1;
+
+    // Worker info exists but has no providerName or sessionId
+    // (worker was assigned but test was skipped before session creation)
+    await fs.writeFile(
+      path.join(mockBasePath, `worker-info-${workerIndex}.json`),
+      JSON.stringify(
+        {
+          idx: workerIndex,
+          startTime: {
+            beforeAppiumSession: new Date().toISOString(),
+            afterAppiumSession: new Date().toISOString(),
+          },
+          tests: [],
+        },
+        null,
+        2,
+      ),
+    );
+
+    const { logger } = await import("../logger.js");
+    // Clear any state from previous tests
+    vi.mocked(logger.error).mockClear();
+    vi.mocked(logger.log).mockClear();
+
+    const reporter = new VideoDownloader();
+    const testCase = {
+      id: "test-skipped",
+      title: "skipped test on worker without session",
+      annotations: [] as { type: string; description?: string }[],
+    } as any;
+    const testResult = {
+      workerIndex,
+      duration: 100,
+      startTime: new Date(),
+      attachments: [],
+    } as any;
+
+    reporter.onTestEnd(testCase, testResult);
+
+    await vi.advanceTimersByTimeAsync(5000);
+    await reporter.onEnd();
+
+    // Should not attempt to download any video
+    expect(downloadVideoMock).not.toHaveBeenCalled();
+    expect(testResult.attachments).toEqual([]);
+
+    // Should NOT log an error (previously threw and was caught as error)
+    expect(logger.error).not.toHaveBeenCalled();
+
+    // Should log an informational skip message
+    expect(logger.log).toHaveBeenCalledWith(
+      expect.stringContaining("skipping video"),
+    );
+  });
 });

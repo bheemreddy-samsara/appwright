@@ -81,9 +81,10 @@ class VideoDownloader implements Reporter {
               }
               const { providerName, sessionId, endTime } = workerInfo;
               if (!providerName || !sessionId) {
-                throw new Error(
-                  `Provider name or session id not found for worker: ${workerIndex}`,
+                logger.log(
+                  `No provider/session for worker ${workerIndex}, skipping video`,
                 );
+                return;
               }
               if (!this.providerSupportsVideo(providerName)) {
                 return; // Nothing to do here
