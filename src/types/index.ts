@@ -136,6 +136,22 @@ export type BrowserStackConfig = {
   gpsLocation?: string;
 
   /**
+   * Enable BrowserStack network logs for the session.
+   * Defaults to true.
+   *
+   * When enabled with captureContent, request/response bodies (which may
+   * include auth tokens, PII, and credentials) are stored in BrowserStack logs.
+   */
+  networkLogs?: boolean;
+
+  /**
+   * Options for BrowserStack network logs. Only applies when networkLogs is enabled.
+   */
+  networkLogsOptions?: {
+    captureContent?: boolean;
+  };
+
+  /**
    * Enable BrowserStack App Performance profiling (appProfiling capability).
    * Defaults to false. When true, BrowserStack captures detailed performance metrics.
    */

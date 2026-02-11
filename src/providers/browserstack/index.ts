@@ -403,7 +403,6 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
     const bstackOptions: Record<string, unknown> = {
       debug: true,
       interactiveDebugging: true,
-      networkLogs: true,
       appiumVersion: configuredAppiumVersion,
       enableCameraImageInjection: deviceConfig?.enableCameraImageInjection,
       idleTimeout: deviceConfig?.idleTimeout ?? 180,
@@ -415,6 +414,18 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
       sessionName: process.env.BROWSERSTACK_SESSION_NAME || defaultSessionName,
       buildIdentifier: ciBuildIdentifier,
     };
+
+    bstackOptions.networkLogs = deviceConfig?.networkLogs ?? true;
+
+    if (deviceConfig?.networkLogsOptions) {
+      if (!deviceConfig?.networkLogs) {
+        logger.warn(
+          "networkLogsOptions is set but networkLogs is not enabled. " +
+            "Set networkLogs: true for these options to take effect.",
+        );
+      }
+      bstackOptions.networkLogsOptions = deviceConfig.networkLogsOptions;
+    }
 
     if (typeof deviceConfig?.appProfiling === "boolean") {
       bstackOptions.appProfiling = deviceConfig.appProfiling;
