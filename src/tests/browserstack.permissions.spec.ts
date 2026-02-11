@@ -1,4 +1,4 @@
-import { describe, afterEach, expect, test } from "vitest";
+import { describe, afterEach, expect, test, vi } from "vitest";
 import { BrowserStackDeviceProvider } from "../providers/browserstack";
 import { Platform, type BrowserStackConfig } from "../types";
 import type { FullProject } from "@playwright/test";
@@ -106,5 +106,60 @@ describe("BrowserStack permission prompt capabilities", () => {
     const config = (provider as any).createConfig();
     expect(config.capabilities["appium:autoAcceptAlerts"]).toBe(true);
     expect(config.capabilities["appium:autoDismissAlerts"]).toBeUndefined();
+  });
+});
+
+describe("BrowserStack network logs capabilities", () => {
+  test("networkLogs defaults to true when not configured", () => {
+    const { provider } = makeProvider(Platform.ANDROID);
+    const config = (provider as any).createConfig();
+    const bstackOptions = config.capabilities["bstack:options"];
+    expect(bstackOptions.networkLogs).toBe(true);
+  });
+
+  test("networkLogs: true is forwarded to bstack:options", () => {
+    const { provider } = makeProvider(Platform.ANDROID, {
+      networkLogs: true,
+    });
+    const config = (provider as any).createConfig();
+    const bstackOptions = config.capabilities["bstack:options"];
+    expect(bstackOptions.networkLogs).toBe(true);
+  });
+
+  test("networkLogs: false is forwarded to bstack:options", () => {
+    const { provider } = makeProvider(Platform.ANDROID, {
+      networkLogs: false,
+    });
+    const config = (provider as any).createConfig();
+    const bstackOptions = config.capabilities["bstack:options"];
+    expect(bstackOptions.networkLogs).toBe(false);
+  });
+
+  test("networkLogsOptions is included in bstack:options when configured", () => {
+    const { provider } = makeProvider(Platform.ANDROID, {
+      networkLogs: true,
+      networkLogsOptions: { captureContent: true },
+    });
+    const config = (provider as any).createConfig();
+    const bstackOptions = config.capabilities["bstack:options"];
+    expect(bstackOptions.networkLogsOptions).toEqual({ captureContent: true });
+  });
+
+  test("networkLogsOptions is absent from bstack:options when not configured", () => {
+    const { provider } = makeProvider(Platform.ANDROID, {
+      networkLogs: true,
+    });
+    const config = (provider as any).createConfig();
+    const bstackOptions = config.capabilities["bstack:options"];
+    expect(bstackOptions).not.toHaveProperty("networkLogsOptions");
+  });
+
+  test("warns when networkLogsOptions is set without networkLogs enabled", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { provider } = makeProvider(Platform.ANDROID, {
+      networkLogsOptions: { captureContent: true },
+    });
+    (provider as any).createConfig();
+    warnSpy.mockRestore();
   });
 });
