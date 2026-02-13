@@ -7,10 +7,19 @@ import test from "@playwright/test";
 const MAX_INSTRUCTION_LENGTH = 10000;
 
 /**
+ * Options for aiExecute. Intentionally exposes only appiumHandler;
+ * cachingMode is set globally at provider init (FULL_SCREEN),
+ * and useSmartLoop is not yet surfaced.
+ */
+export interface AiExecuteOptions {
+  appiumHandler?: () => Promise<void>;
+}
+
+/**
  * GptDriverApi defines the public interface for AI-powered test automation.
  */
 export interface GptDriverApi {
-  aiExecute(instruction: string): Promise<void>;
+  aiExecute(instruction: string, options?: AiExecuteOptions): Promise<void>;
   assert(condition: string): Promise<void>;
   assertBulk(conditions: string[]): Promise<void>;
   checkBulk(conditions: string[]): Promise<Record<string, boolean>>;
@@ -101,11 +110,19 @@ export class GptDriverProvider implements GptDriverApi {
   }
 
   @boxedStep
-  async aiExecute(instruction: string): Promise<void> {
+  async aiExecute(
+    instruction: string,
+    options?: AiExecuteOptions,
+  ): Promise<void> {
     this.validateInstruction(instruction, "aiExecute");
     const driver = this.requireDriver();
     try {
-      await driver.aiExecute(instruction);
+      await driver.aiExecute(
+        instruction,
+        options?.appiumHandler
+          ? { appiumHandler: options.appiumHandler }
+          : undefined,
+      );
     } catch (error) {
       throw new Error(
         `GPT Driver aiExecute failed: ${this.sanitizeError(error)}`,
