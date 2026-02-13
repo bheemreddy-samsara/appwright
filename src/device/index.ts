@@ -12,7 +12,7 @@ import {
   VisualTraceConfig,
 } from "../types";
 import { AppwrightVision, VisionProvider } from "../vision";
-import { GptDriverProvider } from "../gptDriver";
+import { type AiExecuteOptions, GptDriverProvider } from "../gptDriver";
 import { boxedStep, longestDeterministicGroup } from "../utils";
 import { uploadImageToBS } from "../providers/browserstack/utils";
 import { uploadImageToLambdaTest } from "../providers/lambdatest/utils";
@@ -236,7 +236,16 @@ export class Device {
    *
    * **Usage:**
    * ```js
+   * // Plain string
    * await device.gptDriver.aiExecute("tap on the login button");
+   *
+   * // Appium-first with AI fallback
+   * await device.gptDriver.aiExecute("tap on the login button", {
+   *   appiumHandler: async () => {
+   *     await device.getById("login-button").tap();
+   *   },
+   * });
+   *
    * await device.gptDriver.assert("welcome message is visible");
    * await device.gptDriver.assertBulk(["button is visible", "text shows 'Hello'"]);
    * const results = await device.gptDriver.checkBulk(["logged in", "menu open"]);
@@ -244,8 +253,11 @@ export class Device {
    * ```
    */
   gptDriver = {
-    aiExecute: async (instruction: string): Promise<void> => {
-      return await this.gptDriverProvider().aiExecute(instruction);
+    aiExecute: async (
+      instruction: string,
+      options?: AiExecuteOptions,
+    ): Promise<void> => {
+      return await this.gptDriverProvider().aiExecute(instruction, options);
     },
     assert: async (condition: string): Promise<void> => {
       return await this.gptDriverProvider().assert(condition);
