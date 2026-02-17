@@ -11,13 +11,11 @@ import {
   TimeoutOptions,
   VisualTraceConfig,
 } from "../types";
-import { AppwrightVision, VisionProvider } from "../vision";
 import { type AiExecuteOptions, GptDriverProvider } from "../gptDriver";
 import { boxedStep, longestDeterministicGroup } from "../utils";
 import { uploadImageToBS } from "../providers/browserstack/utils";
 import { uploadImageToLambdaTest } from "../providers/lambdatest/utils";
 import { z } from "zod";
-import { LLMModel } from "@empiricalrun/llm";
 import { logger } from "../logger";
 import {
   VisualTraceService,
@@ -189,38 +187,6 @@ export class Device {
     );
   }
 
-  private vision(): AppwrightVision {
-    return new VisionProvider(this, this.webDriverClient);
-  }
-
-  beta = {
-    tap: async (
-      prompt: string,
-      options?: {
-        useCache?: boolean;
-        telemetry?: {
-          tags?: string[];
-        };
-      },
-    ): Promise<{ x: number; y: number }> => {
-      return await this.vision().tap(prompt, options);
-    },
-
-    query: async <T extends z.ZodType>(
-      prompt: string,
-      options?: {
-        responseFormat?: T;
-        model?: LLMModel;
-        screenshot?: string;
-        telemetry?: {
-          tags?: string[];
-        };
-      },
-    ): Promise<ExtractType<T>> => {
-      return await this.vision().query(prompt, options);
-    },
-  };
-
   private gptDriverProvider(): GptDriverProvider {
     if (!this._gptDriverProvider) {
       this._gptDriverProvider = new GptDriverProvider(this.webDriverClient);
@@ -272,6 +238,12 @@ export class Device {
     },
     extract: async (extractions: string[]): Promise<Record<string, any>> => {
       return await this.gptDriverProvider().extract(extractions);
+    },
+    query: async <T extends z.ZodType>(
+      prompt: string,
+      options?: { responseFormat?: T },
+    ): Promise<ExtractType<T>> => {
+      return await this.gptDriverProvider().query(prompt, options);
     },
   };
 

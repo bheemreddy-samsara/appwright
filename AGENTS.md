@@ -34,7 +34,7 @@ npm run changeset     # prepare release notes when changes ship
 - Core library: `src/` → [see src/AGENTS.md](src/AGENTS.md)
 - Device runtime: `src/device/` → [see src/device/AGENTS.md](src/device/AGENTS.md)
 - Providers (BrowserStack, LambdaTest, emulator, local): `src/providers/` → [see src/providers/AGENTS.md](src/providers/AGENTS.md)
-- Vision utilities: `src/vision/` → [see src/vision/AGENTS.md](src/vision/AGENTS.md)
+- GPT Driver AI utilities: `src/gptDriver/` → [see src/gptDriver/index.ts](src/gptDriver/index.ts)
 - Visual trace capture: `src/visualTrace/` → [see src/visualTrace/AGENTS.md](src/visualTrace/AGENTS.md)
 - Test suite: `src/tests/` → [see src/tests/AGENTS.md](src/tests/AGENTS.md)
 - Example consumer app: `example/` → [see example/AGENTS.md](example/AGENTS.md)
@@ -43,7 +43,7 @@ npm run changeset     # prepare release notes when changes ship
 - Locate a public export: `rg -n "export .*" src/index.ts src/types` (fallback: `grep -rn "export .*" src/index.ts src/types`)
 - Discover provider hooks: `rg -n "DeviceProvider" src/providers` (fallback: `grep -rn "DeviceProvider" src/providers`)
 - Inspect Playwright fixtures: `rg -n "extend<TestLevelFixtures" src/fixture` (fallback: `grep -rn "extend<TestLevelFixtures" src/fixture`)
-- Track vision helpers: `rg -n "AppwrightVision" src/vision` (fallback: `grep -rn "AppwrightVision" src/vision`)
+- Track GPT Driver API: `rg -n "GptDriverApi" src/gptDriver` (fallback: `grep -rn "GptDriverApi" src/gptDriver`)
 - Find targeted tests: `rg -n "\\.spec\\.ts" src/tests` (fallback: `grep -rn "\.spec\.ts" src/tests`)
 - Review BrowserStack permission prompts wiring: `rg -n "permissionPrompts" src/providers src/types`
 

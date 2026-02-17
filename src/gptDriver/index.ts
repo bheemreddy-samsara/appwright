@@ -3,6 +3,8 @@ import GptDriver from "gpt-driver-node";
 import type { Client as WebDriverClient } from "webdriver";
 import { boxedStep } from "../utils";
 import test from "@playwright/test";
+import { z } from "zod";
+import { ExtractType } from "../types";
 
 const MAX_INSTRUCTION_LENGTH = 10000;
 
@@ -24,6 +26,10 @@ export interface GptDriverApi {
   assertBulk(conditions: string[]): Promise<void>;
   checkBulk(conditions: string[]): Promise<Record<string, boolean>>;
   extract(extractions: string[]): Promise<Record<string, any>>;
+  query<T extends z.ZodType>(
+    prompt: string,
+    options?: { responseFormat?: T },
+  ): Promise<ExtractType<T>>;
 }
 
 /**
@@ -34,7 +40,6 @@ export interface GptDriverApi {
  * - Cached for subsequent calls
  * - Gracefully skips tests when API key is not configured
  *
- * Similar to: VisionProvider
  */
 export class GptDriverProvider implements GptDriverApi {
   private driver: GptDriver | null = null;
@@ -180,5 +185,31 @@ export class GptDriverProvider implements GptDriverApi {
         `GPT Driver extract failed: ${this.sanitizeError(error)}`,
       );
     }
+  }
+
+  @boxedStep
+  async query<T extends z.ZodType>(
+    prompt: string,
+    options?: { responseFormat?: T },
+  ): Promise<ExtractType<T>> {
+    this.validateInstruction(prompt, "query");
+    const driver = this.requireDriver();
+    let result: Record<string, any>;
+    try {
+      result = await driver.extract([prompt]);
+    } catch (error) {
+      throw new Error(`GPT Driver query failed: ${this.sanitizeError(error)}`);
+    }
+    const value = Object.values(result)[0];
+    if (options?.responseFormat) {
+      try {
+        return options.responseFormat.parse(value) as ExtractType<T>;
+      } catch {
+        throw new Error(
+          "GPT Driver query: response did not match the expected schema",
+        );
+      }
+    }
+    return value as ExtractType<T>;
   }
 }
