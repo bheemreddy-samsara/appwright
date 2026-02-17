@@ -1,56 +1,73 @@
-# Vision methods
+# AI-Powered Test Methods
 
-Appwright provides a set of built-in methods to tap or extract information from the screen. These methods use LLM Capabilities to perform actions on the screen.
+Appwright provides AI-powered methods for interacting with and extracting information from the screen via [GPT Driver](https://gptdriver.com). All methods require the `GPT_DRIVER_API_KEY` environment variable.
+
+## Execute actions on the screen
+
+The `aiExecute` method performs AI-driven actions on the screen based on a natural language prompt.
+
+```ts
+await device.gptDriver.aiExecute("tap on the login button");
+```
+
+You can provide an Appium-first handler with AI as a fallback:
+
+```ts
+await device.gptDriver.aiExecute("tap on the login button", {
+  appiumHandler: async () => {
+    await device.getById("login-button").tap();
+  },
+});
+```
 
 ## Extract information from the screen
 
-The `query` method allows you to extract information from the screen based on a prompt. Ensure the `OPENAI_API_KEY` environment variable is set to authenticate the API request.
+The `query` method extracts a single value from the screen based on a prompt.
 
 ```ts
-const text = await device.beta.query("Extract the contact details present in the footer");
+const text = await device.gptDriver.query("Extract the contact details present in the footer");
 ```
 
-By default, the `query` method returns a string. You can also specify a Zod schema to get the response in a specific format.
+You can specify a Zod schema to get a typed response:
 
 ```ts
-const isLoginButtonVisible = await device.beta.query(
-      `Is the login button visible on the screen?`,
-      {
-        responseFormat: z.boolean(),
-      },
-    );
+const isLoginButtonVisible = await device.gptDriver.query(
+  "Is the login button visible on the screen?",
+  {
+    responseFormat: z.boolean(),
+  },
+);
 ```
 
-### Using custom screenshot
-
-By default, the query method retrieves information from the current screen. Alternatively, you can specify a screenshot to perform operations on that particular image.
+For extracting multiple values at once, use `extract`:
 
 ```ts
-const text = await device.beta.query(
-      "Extract contact details from the footer of this screenshot.",
-      {
-        screenshot: <base64ImageString>,
-      },
-    );
+const data = await device.gptDriver.extract(["total price", "item count"]);
+// data = { "total price": "$19.99", "item count": "3" }
 ```
 
-### Using a different model
-
-By default, the `query` method uses the `gpt-4o-mini` model. You can also specify a different model.
+## Assert screen state
 
 ```ts
-const text = await device.beta.query(
-      `Extract contact details present in the footer`,
-      {
-        model: "gpt-4o",
-      },
-    );
+await device.gptDriver.assert("welcome message is visible");
+await device.gptDriver.assertBulk(["button is visible", "text shows 'Hello'"]);
+const results = await device.gptDriver.checkBulk(["logged in", "menu open"]);
 ```
 
-## Tap on the screen
+## Migration from `device.beta`
 
-The `tap` method allows you to tap on the screen based on a prompt. Ensure the `EMPIRICAL_API_KEY` environment variable is set to authenticate the API request.
+| Before | After |
+|--------|-------|
+| `device.beta.tap("tap login")` | `device.gptDriver.aiExecute("tap login")` |
+| `device.beta.query("get price")` | `device.gptDriver.query("get price")` |
+| `device.beta.query(p, { responseFormat: z.object({...}) })` | `device.gptDriver.query(p, { responseFormat: z.object({...}) })` |
+| `OPENAI_API_KEY` + `EMPIRICAL_API_KEY` | `GPT_DRIVER_API_KEY` |
 
-```ts
-await device.beta.tap("point at the 'Login' button.");
-```
+**Behavioral change:** `device.beta.tap()` returned `Promise<{ x: number; y: number }>` (tap coordinates). `device.gptDriver.aiExecute()` returns `Promise<void>` — coordinate data is not available from the GPT Driver SDK.
+
+The following `device.beta` options have no GPT Driver equivalent and have been dropped:
+
+- `model` — GPT Driver uses its own model server-side
+- `useCache` — GPT Driver has its own caching via `cachingMode: "FULL_SCREEN"`
+- `screenshot` — GPT Driver takes its own screenshots via the Appium session
+- `telemetry.tags` — GPT Driver uses `testId` instead

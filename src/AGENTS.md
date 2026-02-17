@@ -23,7 +23,7 @@ npm test
 - `src/index.ts` – package exports
 - `src/config.ts` – `defineConfig` helper consumed by example projects
 - `src/fixture/index.ts` – Playwright fixtures and persistent device lifecycle
-- `src/device/index.ts` – Device abstraction sharing logger, vision, visual trace
+- `src/device/index.ts` – Device abstraction sharing logger, GPT Driver, visual trace
 - `src/types/index.ts` – shared enums and interfaces for providers, locators, and config
 
 ## 5. JIT Index Hints

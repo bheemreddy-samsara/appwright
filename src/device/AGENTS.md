@@ -2,7 +2,7 @@
 
 ## 1. Package Identity
 - Implements the `Device` class that wraps WebDriver clients with Appwright-specific helpers
-- Coordinates vision, persistent sync, boxed steps, and provider integrations
+- Coordinates GPT Driver AI, persistent sync, boxed steps, and provider integrations
 
 ## 2. Setup & Run
 ```bash
@@ -19,7 +19,7 @@ npm test -- src/tests/device.spec.ts
 - ❌ DON’T bypass persistent lifecycle helpers; always call `preparePersistentTest`/`finalizePersistentTest`
 
 ## 4. Touch Points / Key Files
-- `src/device/index.ts` – full `Device` implementation and `beta` utilities
+- `src/device/index.ts` – full `Device` implementation and `gptDriver` utilities
 - `src/utils.ts` – utilities like `boxedStep` leveraged by device methods
 - `src/visualTrace/service.ts` – interacts through `initializeVisualTrace`
 - `src/providers/browserstack/index.ts` – injects provider-specific behavior consumed by `Device`
@@ -28,7 +28,7 @@ npm test -- src/tests/device.spec.ts
 ## 5. JIT Index Hints
 - Locate lifecycle hooks: `rg -n "preparePersistentTest" src/device/index.ts` (fallback: `grep -rn "preparePersistentTest" src/device/index.ts`)
 - Find visual trace usage: `rg -n "initializeVisualTrace" src/device` (fallback: `grep -rn "initializeVisualTrace" src/device`)
-- Inspect beta helpers: `rg -n "beta =" src/device/index.ts` (fallback: `grep -rn "beta =" src/device/index.ts`)
+- Inspect GPT Driver facade: `rg -n "gptDriver =" src/device/index.ts` (fallback: `grep -rn "gptDriver =" src/device/index.ts`)
 - Track provider sync: `rg -n "safeSync" src/device/index.ts` (fallback: `grep -rn "safeSync" src/device/index.ts`)
 
 ## 6. Common Gotchas
