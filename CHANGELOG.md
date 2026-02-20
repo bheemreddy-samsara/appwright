@@ -1,5 +1,11 @@
 # appwright
 
+## 0.9.14
+
+### Patch Changes
+
+- c7b7722: Switch GPT Driver cachingMode from FULL_SCREEN to INTERACTION_REGION
+
 ## 0.9.13
 
 ### Patch Changes
