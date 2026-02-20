@@ -3,6 +3,7 @@ import GptDriver from "gpt-driver-node";
 import type { Client as WebDriverClient } from "webdriver";
 import { boxedStep } from "../utils";
 import test from "@playwright/test";
+import type { GptDriverConfig } from "../types";
 
 const MAX_INSTRUCTION_LENGTH = 10000;
 
@@ -39,7 +40,10 @@ export interface GptDriverApi {
 export class GptDriverProvider implements GptDriverApi {
   private driver: GptDriver | null = null;
 
-  constructor(private webDriverClient: WebDriverClient) {}
+  constructor(
+    private webDriverClient: WebDriverClient,
+    private options?: GptDriverConfig,
+  ) {}
 
   private getAppiumUrl(): string {
     const { protocol, hostname, port, path, user, key } =
@@ -67,6 +71,9 @@ export class GptDriverProvider implements GptDriverApi {
       serverConfig: { url: this.getAppiumUrl() },
       cachingMode: "FULL_SCREEN",
       testId: test.info()?.testId ?? `test-${Date.now()}`,
+      ...(this.options?.additionalUserContext != null && {
+        additionalUserContext: this.options.additionalUserContext,
+      }),
     });
     console.debug("[GptDriver] Initialized successfully");
     return this.driver;

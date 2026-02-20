@@ -196,6 +196,7 @@ export class AWSDeviceFarmProvider implements DeviceProvider {
       async () => {
         await this.stopRemoteSession();
       },
+      this.project.use.gptDriver,
     );
   }
 

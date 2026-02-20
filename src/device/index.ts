@@ -5,6 +5,7 @@ import {
   AppwrightLocator,
   DeviceProvider,
   ExtractType,
+  GptDriverConfig,
   IosAppSettings,
   IosPermissionSettings,
   Platform,
@@ -43,6 +44,7 @@ export class Device {
     private provider: string,
     deviceProvider?: DeviceProvider,
     cleanupCallback?: () => Promise<void>,
+    private gptDriverOptions?: GptDriverConfig,
   ) {
     this.deviceProvider = deviceProvider;
     this.cleanupCallback = cleanupCallback;
@@ -223,7 +225,10 @@ export class Device {
 
   private gptDriverProvider(): GptDriverProvider {
     if (!this._gptDriverProvider) {
-      this._gptDriverProvider = new GptDriverProvider(this.webDriverClient);
+      this._gptDriverProvider = new GptDriverProvider(
+        this.webDriverClient,
+        this.gptDriverOptions,
+      );
     }
     return this._gptDriverProvider;
   }
