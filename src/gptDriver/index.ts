@@ -39,6 +39,7 @@ export interface GptDriverApi {
  */
 export class GptDriverProvider implements GptDriverApi {
   private driver: GptDriver | null = null;
+  private testIdWarned = false;
 
   constructor(
     private webDriverClient: WebDriverClient,
@@ -88,6 +89,24 @@ export class GptDriverProvider implements GptDriverApi {
       );
       throw new Error("GPT Driver not configured");
     }
+
+    // Update testId to current test context so persistent device fixtures
+    // report the correct test in GPT Driver API calls.
+    // gpt-driver-node declares testId as private in TS but it's a plain
+    // JS property at runtime — safe to mutate directly.
+    // TODO: Replace with public setTestId() if gpt-driver-node exposes one.
+    const currentTestId = test.info()?.testId;
+    if (currentTestId && "testId" in (driver as any)) {
+      (driver as any).testId = currentTestId;
+    } else if (currentTestId && !this.testIdWarned) {
+      console.warn(
+        "[GptDriver] Cannot update testId — property not found on driver instance. " +
+          "GPT Driver sessions may be attributed to the wrong test. " +
+          "Check if gpt-driver-node renamed or removed the testId field.",
+      );
+      this.testIdWarned = true;
+    }
+
     return driver;
   }
 
