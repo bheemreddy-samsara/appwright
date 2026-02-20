@@ -9,7 +9,7 @@ const MAX_INSTRUCTION_LENGTH = 10000;
 
 /**
  * Options for aiExecute. Intentionally exposes only appiumHandler;
- * cachingMode is set globally at provider init (FULL_SCREEN),
+ * cachingMode is set globally at provider init (INTERACTION_REGION),
  * and useSmartLoop is not yet surfaced.
  */
 export interface AiExecuteOptions {
@@ -69,7 +69,7 @@ export class GptDriverProvider implements GptDriverApi {
       // gpt-driver-node expects webdriverio Browser type but webdriver Client is API-compatible at runtime
       driver: this.webDriverClient as any,
       serverConfig: { url: this.getAppiumUrl() },
-      cachingMode: "FULL_SCREEN",
+      cachingMode: "INTERACTION_REGION",
       testId: test.info()?.testId ?? `test-${Date.now()}`,
       ...(this.options?.additionalUserContext != null && {
         additionalUserContext: this.options.additionalUserContext,
