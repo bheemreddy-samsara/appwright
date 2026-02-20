@@ -87,6 +87,8 @@ Follow the steps mentioned in ${androidSimulatorConfigDocLink} to run test on An
       testOptions,
       this.project.use.device?.provider!,
       this,
+      undefined,
+      this.project.use.gptDriver,
     );
   }
 

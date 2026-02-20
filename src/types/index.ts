@@ -52,6 +52,23 @@ export type AppwrightConfig = {
   appBundleId: string;
   // TODO: use expect timeout from playwright config
   expectTimeout: number;
+
+  /**
+   * Configuration for the GPT Driver AI integration.
+   */
+  gptDriver?: GptDriverConfig;
+};
+
+/**
+ * Configuration for GPT Driver passed through to the gpt-driver-node SDK.
+ */
+export type GptDriverConfig = {
+  /**
+   * Additional context passed to the GPT Driver AI for every interaction.
+   * Use this to provide app-specific knowledge (e.g. AGENTS.md content)
+   * that helps the AI understand your app's UI and behavior.
+   */
+  additionalUserContext?: string;
 };
 
 /**

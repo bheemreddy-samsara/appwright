@@ -166,6 +166,8 @@ export class LambdaTestDeviceProvider implements DeviceProvider {
       testOptions,
       this.project.use.device?.provider!,
       this,
+      undefined,
+      this.project.use.gptDriver,
     );
   }
 
