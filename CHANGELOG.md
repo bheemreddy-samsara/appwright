@@ -1,5 +1,11 @@
 # appwright
 
+## 0.9.13
+
+### Patch Changes
+
+- 1148964: Upgrade gpt-driver-node to ^1.0.8 and expose additionalUserContext config option for passing app-specific context to GPT Driver AI
+
 ## 0.9.12
 
 ### Patch Changes
