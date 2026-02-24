@@ -10,6 +10,11 @@ import { WorkerInfo, WorkerInfoStore } from "./fixture/workerInfo";
 
 class VideoDownloader implements Reporter {
   private downloadPromises: Promise<any>[] = [];
+  // Ensures only one download per session — prevents concurrent downloads
+  // when multiple tests on the same worker resolve endTime simultaneously.
+  // Keyed by sessionId (not workerIndex) because Playwright can reuse
+  // workerIndex across worker restarts with different sessions.
+  private sessionDownloadLocks = new Map<string, Promise<string | null>>();
 
   onBegin() {
     if (fs.existsSync(basePath())) {
@@ -62,7 +67,7 @@ class VideoDownloader implements Reporter {
         type: "workerInfo",
         description: `Ran on worker #${workerIndex}.`,
       });
-      // The `onTestEnd` is method is called before the worker ends and
+      // The `onTestEnd` method is called before the worker ends and
       // the worker's `endTime` is saved to disk. We add a 5 secs delay
       // to prevent a harmful race condition.
       const workerDownload = getWorkerInfo(workerIndex)
@@ -90,38 +95,63 @@ class VideoDownloader implements Reporter {
                 return; // Nothing to do here
               }
               const workerVideoBaseName = `worker-${workerIndex}-${sessionId}-video`;
+              const expectedWorkerVideoPath = path.join(
+                basePath(),
+                `${workerVideoBaseName}.mp4`,
+              );
               if (endTime) {
-                // This is the last test in the worker, so let's download the video
-                const provider = getProviderClass(providerName);
-                const downloaded: {
-                  path: string;
-                  contentType: string;
-                } | null = await provider.downloadVideo(
+                // Last test in the worker — download through the lock
+                // so concurrent endTime resolutions don't race.
+                const downloadedPath = await this.ensureWorkerVideoDownloaded(
                   sessionId,
-                  basePath(),
+                  providerName,
                   workerVideoBaseName,
                 );
-                if (!downloaded) {
+                if (!downloadedPath) {
                   return;
                 }
                 return this.trimAndAttachPersistentDeviceVideo(
                   test,
                   result,
-                  downloaded.path,
+                  downloadedPath,
                 );
               } else {
-                // This is an intermediate test in the worker, so let's wait for the
-                // video file to be found on disk. Once it is, we trim and attach it.
-                const expectedWorkerVideoPath = path.join(
-                  basePath(),
-                  `${workerVideoBaseName}.mp4`,
-                );
-                await waitFor(() => fs.existsSync(expectedWorkerVideoPath));
-                return this.trimAndAttachPersistentDeviceVideo(
-                  test,
-                  result,
+                // This looks like an intermediate test, but endTime may not
+                // have been written yet (race condition — common when a worker
+                // has only one test, e.g. retries). Poll for EITHER the video
+                // file on disk (written by the last test's download) OR
+                // endTime appearing (meaning we need to download ourselves).
+                const resolved = await waitForFileOrEndTime(
                   expectedWorkerVideoPath,
+                  workerIndex,
                 );
+                if (resolved === "file") {
+                  return this.trimAndAttachPersistentDeviceVideo(
+                    test,
+                    result,
+                    expectedWorkerVideoPath,
+                  );
+                } else {
+                  // endTime was set but file doesn't exist yet. Use the
+                  // per-session lock so only one test triggers the download;
+                  // others await the same promise.
+                  const downloadedPath = await this.ensureWorkerVideoDownloaded(
+                    sessionId,
+                    providerName,
+                    workerVideoBaseName,
+                  );
+                  if (!downloadedPath) {
+                    logger.error(
+                      `Video download returned null for session ${sessionId}, skipping attachment`,
+                    );
+                    return;
+                  }
+                  return this.trimAndAttachPersistentDeviceVideo(
+                    test,
+                    result,
+                    downloadedPath,
+                  );
+                }
               }
             });
         })
@@ -182,6 +212,35 @@ class VideoDownloader implements Reporter {
     });
   }
 
+  /**
+   * Ensures exactly one download per session. The first caller triggers the
+   * download; concurrent callers await the same promise. Returns the
+   * downloaded file path, or null if the download failed.
+   *
+   * Keyed by sessionId (not workerIndex) because Playwright can reuse
+   * workerIndex across worker restarts with different BrowserStack sessions.
+   */
+  private async ensureWorkerVideoDownloaded(
+    sessionId: string,
+    providerName: string,
+    workerVideoBaseName: string,
+  ): Promise<string | null> {
+    if (!this.sessionDownloadLocks.has(sessionId)) {
+      const downloadPromise = (async () => {
+        const provider = getProviderClass(providerName);
+        const downloaded: { path: string; contentType: string } | null =
+          await provider.downloadVideo(
+            sessionId,
+            basePath(),
+            workerVideoBaseName,
+          );
+        return downloaded?.path ?? null;
+      })();
+      this.sessionDownloadLocks.set(sessionId, downloadPromise);
+    }
+    return this.sessionDownloadLocks.get(sessionId)!;
+  }
+
   private downloadAndAttachDeviceVideo(
     test: TestCase,
     result: TestResult,
@@ -219,24 +278,42 @@ class VideoDownloader implements Reporter {
   }
 }
 
-function waitFor(
-  condition: () => boolean,
-  timeout: number = 60 * 60 * 1000, // 1 hour in ms
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    let interval: any;
-    const timeoutId = setTimeout(() => {
-      clearInterval(interval);
-      reject(new Error("Timed out waiting for condition"));
-    }, timeout);
-    interval = setInterval(() => {
-      if (condition()) {
-        clearInterval(interval);
-        clearTimeout(timeoutId);
-        resolve();
+/**
+ * Poll until the video file appears on disk OR the worker's endTime is set.
+ *
+ * When a worker has only one test (common with retries), the 5-second delay
+ * before checking endTime may not be enough — the worker teardown can take
+ * longer than 5 seconds. In that case onTestEnd
+ * incorrectly treats the last test as "intermediate" and waits for a video file
+ * that will never be created. This function resolves the race by checking both
+ * conditions in parallel.
+ *
+ * Uses validateMp4 instead of fs.existsSync to ensure the file is fully
+ * written (has a valid moov atom) before returning.
+ */
+async function waitForFileOrEndTime(
+  filePath: string,
+  workerIndex: number,
+  timeout: number = 5 * 60 * 1000, // 5 minutes
+): Promise<"file" | "endTime"> {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    if (fs.existsSync(filePath) && validateMp4(filePath)) {
+      return "file";
+    }
+    try {
+      const info = await getWorkerInfo(workerIndex);
+      if (info?.endTime) {
+        return "endTime";
       }
-    }, 500);
-  });
+    } catch {
+      // getWorkerInfo can fail transiently; keep polling
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error(
+    `Timed out waiting for video file or worker ${workerIndex} endTime`,
+  );
 }
 
 /**
