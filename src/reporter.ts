@@ -6,6 +6,7 @@ import ffmpeg from "fluent-ffmpeg";
 import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
 import { logger } from "./logger";
 import { basePath } from "./utils";
+import { validateMp4 } from "./validateMp4";
 import { WorkerInfo, WorkerInfoStore } from "./fixture/workerInfo";
 
 class VideoDownloader implements Reporter {
@@ -314,41 +315,6 @@ async function waitForFileOrEndTime(
   throw new Error(
     `Timed out waiting for video file or worker ${workerIndex} endTime`,
   );
-}
-
-/**
- * Validate that an MP4 file has a valid moov atom (metadata header).
- * BrowserStack videos can be incomplete if downloaded before finalization,
- * resulting in a missing moov atom that causes ffmpeg to fail.
- */
-function validateMp4(filePath: string): boolean {
-  try {
-    const fd = fs.openSync(filePath, "r");
-    const stat = fs.fstatSync(fd);
-    const moovMarker = Buffer.from("moov");
-    const chunkSize = Math.min(stat.size, 128 * 1024);
-
-    // Check the beginning (fast-start MP4s place moov before mdat)
-    const head = Buffer.alloc(chunkSize);
-    fs.readSync(fd, head, 0, chunkSize, 0);
-    if (head.includes(moovMarker)) {
-      fs.closeSync(fd);
-      return true;
-    }
-
-    // Check the end (standard MP4s place moov after mdat)
-    if (stat.size > chunkSize) {
-      const tail = Buffer.alloc(chunkSize);
-      fs.readSync(fd, tail, 0, chunkSize, stat.size - chunkSize);
-      fs.closeSync(fd);
-      return tail.includes(moovMarker);
-    }
-
-    fs.closeSync(fd);
-    return false;
-  } catch {
-    return false;
-  }
 }
 
 function trimVideo({

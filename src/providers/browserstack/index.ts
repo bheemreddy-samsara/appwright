@@ -16,6 +16,7 @@ import {
   applyAppiumSettingsToCapabilities,
   buildAppiumUpdateSettings,
 } from "../appiumSettings";
+import { validateMp4 } from "../../validateMp4";
 
 type BrowserStackSessionDetails = {
   name: string;
@@ -292,15 +293,23 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
               fileStream.destroy();
               throw err;
             }
+            // BrowserStack can return HTTP 200 with a video whose moov
+            // atom hasn't been written yet (still encoding). Throwing
+            // here lets async-retry re-download until the file is valid.
+            if (!validateMp4(tempPathForWriting)) {
+              throw new Error(
+                "Downloaded video is incomplete (missing moov atom)",
+              );
+            }
           },
           {
-            retries: 10,
+            retries: 5,
             minTimeout: 3_000,
             maxTimeout: 60_000,
             onRetry: (err, i) => {
               const message = err instanceof Error ? err.message : String(err);
               logger.warn(
-                `[${new Date().toISOString()}] Video download retry ${i}/10 failed: ${message}`,
+                `[${new Date().toISOString()}] Video download retry ${i}/5 failed: ${message}`,
               );
             },
           },
