@@ -1,5 +1,11 @@
 # appwright
 
+## 0.9.17
+
+### Patch Changes
+
+- 804fdbe: Upgrade gpt-driver-node from ^1.0.8 to ^1.0.11 for cache hit rate performance improvements
+
 ## 0.9.16
 
 ### Patch Changes
