@@ -1,5 +1,11 @@
 # appwright
 
+## 0.9.19
+
+### Patch Changes
+
+- 17f5350: Add `testIdFormat` option to `GptDriverConfig` for human-readable GPT Driver session IDs. When configured, replaces Playwright's hash-based testId with a custom format (e.g. "Form Submission - submit form with all field types") in every MobileBoost API call. Backward-compatible: omitting the option preserves existing behavior.
+
 ## 0.9.18
 
 ### Patch Changes
