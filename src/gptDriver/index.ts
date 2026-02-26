@@ -3,7 +3,7 @@ import GptDriver from "gpt-driver-node";
 import type { Client as WebDriverClient } from "webdriver";
 import { boxedStep } from "../utils";
 import test from "@playwright/test";
-import type { GptDriverConfig } from "../types";
+import type { GptDriverConfig, TestIdInfo } from "../types";
 
 const MAX_INSTRUCTION_LENGTH = 10000;
 
@@ -46,6 +46,27 @@ export class GptDriverProvider implements GptDriverApi {
     private options?: GptDriverConfig,
   ) {}
 
+  /**
+   * Resolve the testId for the current test context.
+   * Uses the custom testIdFormat callback if configured, otherwise falls back
+   * to Playwright's hash-based testId.
+   */
+  private resolveTestId(
+    testInfo:
+      | { testId: string; title: string; titlePath: string[] }
+      | undefined,
+  ): string | undefined {
+    if (!testInfo) return undefined;
+    if (this.options?.testIdFormat) {
+      const info: TestIdInfo = {
+        title: testInfo.title,
+        titlePath: testInfo.titlePath,
+      };
+      return this.options.testIdFormat(info);
+    }
+    return testInfo.testId;
+  }
+
   private getAppiumUrl(): string {
     const { protocol, hostname, port, path, user, key } =
       this.webDriverClient.options;
@@ -71,7 +92,7 @@ export class GptDriverProvider implements GptDriverApi {
       driver: this.webDriverClient as any,
       serverConfig: { url: this.getAppiumUrl() },
       cachingMode: "INTERACTION_REGION",
-      testId: test.info()?.testId ?? `test-${Date.now()}`,
+      testId: this.resolveTestId(test.info()) ?? `test-${Date.now()}`,
       ...(this.options?.additionalUserContext != null && {
         additionalUserContext: this.options.additionalUserContext,
       }),
@@ -95,7 +116,7 @@ export class GptDriverProvider implements GptDriverApi {
     // gpt-driver-node declares testId as private in TS but it's a plain
     // JS property at runtime — safe to mutate directly.
     // TODO: Replace with public setTestId() if gpt-driver-node exposes one.
-    const currentTestId = test.info()?.testId;
+    const currentTestId = this.resolveTestId(test.info());
     if (currentTestId && "testId" in (driver as any)) {
       (driver as any).testId = currentTestId;
     } else if (currentTestId && !this.testIdWarned) {

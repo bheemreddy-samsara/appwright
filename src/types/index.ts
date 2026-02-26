@@ -60,6 +60,17 @@ export type AppwrightConfig = {
 };
 
 /**
+ * Minimal test metadata exposed to the testIdFormat callback.
+ * Deliberately narrow to avoid coupling consumer code to Playwright internals.
+ */
+export type TestIdInfo = {
+  /** The test's own title (e.g. "submit form with all field types"). */
+  title: string;
+  /** Full title path from outermost describe to the test (e.g. ["Form Submission", "submit form…"]). */
+  titlePath: string[];
+};
+
+/**
  * Configuration for GPT Driver passed through to the gpt-driver-node SDK.
  */
 export type GptDriverConfig = {
@@ -69,6 +80,21 @@ export type GptDriverConfig = {
    * that helps the AI understand your app's UI and behavior.
    */
   additionalUserContext?: string;
+
+  /**
+   * Custom formatter for the testId sent to GPT Driver / MobileBoost.
+   * When provided, the return value replaces Playwright's hash-based testId
+   * in every GPT Driver API call, making sessions easier to identify in the
+   * MobileBoost dashboard.
+   *
+   * @example
+   * ```ts
+   * testIdFormat: (info) =>
+   *   info.titlePath.slice(0, -1).join(" > ") + " - " + info.title
+   * // Produces: "Form Submission - submit form with all field types"
+   * ```
+   */
+  testIdFormat?: (info: TestIdInfo) => string;
 };
 
 /**
