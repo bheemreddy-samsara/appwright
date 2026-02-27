@@ -539,8 +539,8 @@ export type IosPermissionSettings = Partial<{
     "ALLOW LOCATION ACCESS": "Always" | "While Using the App" | "Never";
     "Precise Location": "ON" | "OFF";
   }>;
-  Camera: "Allow" | "Deny";
-  Contacts: "Allow" | "Deny";
+  Camera: "ON" | "OFF";
+  Contacts: "ON" | "OFF";
   Photos: "Add Photos Only" | "Selected Photos" | "All Photos" | "None";
   Notifications: Partial<{
     "Allow Notifications": "ON" | "OFF";

@@ -123,7 +123,7 @@ describe("Device", () => {
               "ALLOW LOCATION ACCESS": "Always" as const,
               "Precise Location": "ON" as const,
             },
-            Camera: "Allow" as const,
+            Camera: "ON" as const,
           },
         };
 
@@ -171,7 +171,7 @@ describe("Device", () => {
         const updateSpy = vi.spyOn(device, "updateAppSettings");
 
         const permissions: IosPermissionSettings = {
-          Camera: "Allow",
+          Camera: "ON",
           Photos: "All Photos",
           Notifications: { "Allow Notifications": "ON" },
         };
