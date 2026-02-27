@@ -1,5 +1,13 @@
 # appwright
 
+## 0.10.0
+
+### Minor Changes
+
+- bfa60c5: Surface `setSessionSucceeded`, `setSessionFailed`, and `useSmartLoop` from gpt-driver-node SDK.
+  - `setSessionSucceeded()` / `setSessionFailed()`: Mark MobileBoost session status for dashboard filtering and cache validation.
+  - `useSmartLoop` on `aiExecute`: Enable Cache → AI → Execute → Populate cycle for faster repeat runs.
+
 ## 0.9.20
 
 ### Patch Changes
