@@ -1,5 +1,11 @@
 # appwright
 
+## 0.10.1
+
+### Patch Changes
+
+- a3222f8: Fix iOS permission types: Camera and Contacts use "ON"/"OFF" per BrowserStack API, not "Allow"/"Deny"
+
 ## 0.10.0
 
 ### Minor Changes
