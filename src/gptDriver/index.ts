@@ -4,16 +4,23 @@ import type { Client as WebDriverClient } from "webdriver";
 import { boxedStep } from "../utils";
 import test from "@playwright/test";
 import type { GptDriverConfig, TestIdInfo } from "../types";
+import { logger } from "../logger";
 
 const MAX_INSTRUCTION_LENGTH = 10000;
 
 /**
- * Options for aiExecute. Intentionally exposes only appiumHandler;
- * cachingMode is set globally at provider init (INTERACTION_REGION),
- * and useSmartLoop is not yet surfaced.
+ * Options for aiExecute.
+ * cachingMode is set globally at provider init (INTERACTION_REGION).
  */
 export interface AiExecuteOptions {
   appiumHandler?: () => Promise<void>;
+  /**
+   * Enable Smart Loop: Cache → AI → Execute → Populate cycle.
+   * On cache hit, replays stored Appium commands without an AI call (~1-2s vs ~15s).
+   * On cache miss, falls back to AI, then populates cache for future runs.
+   * Cache key: hash(apiKey + testId + stepNumber + description + platform + resolution).
+   */
+  useSmartLoop?: boolean;
 }
 
 /**
@@ -25,6 +32,10 @@ export interface GptDriverApi {
   assertBulk(conditions: string[]): Promise<void>;
   checkBulk(conditions: string[]): Promise<Record<string, boolean>>;
   extract(extractions: string[]): Promise<Record<string, any>>;
+  /** Mark the MobileBoost session as succeeded. Call after test passes. */
+  setSessionSucceeded(): Promise<void>;
+  /** Mark the MobileBoost session as failed. Call after test fails. */
+  setSessionFailed(): Promise<void>;
 }
 
 /**
@@ -164,12 +175,10 @@ export class GptDriverProvider implements GptDriverApi {
     this.validateInstruction(instruction, "aiExecute");
     const driver = this.requireDriver();
     try {
-      await driver.aiExecute(
-        instruction,
-        options?.appiumHandler
-          ? { appiumHandler: options.appiumHandler }
-          : undefined,
-      );
+      await driver.aiExecute(instruction, {
+        ...(options?.appiumHandler && { appiumHandler: options.appiumHandler }),
+        ...(options?.useSmartLoop && { useSmartLoop: true }),
+      });
     } catch (error) {
       throw new Error(
         `GPT Driver aiExecute failed: ${this.sanitizeError(error)}`,
@@ -225,6 +234,30 @@ export class GptDriverProvider implements GptDriverApi {
     } catch (error) {
       throw new Error(
         `GPT Driver extract failed: ${this.sanitizeError(error)}`,
+      );
+    }
+  }
+
+  async setSessionSucceeded(): Promise<void> {
+    const driver = this.getDriver();
+    if (!driver) return;
+    try {
+      await driver.setSessionSucceeded();
+    } catch (error) {
+      logger.warn(
+        `[GptDriver] Failed to mark session as succeeded: ${this.sanitizeError(error)}`,
+      );
+    }
+  }
+
+  async setSessionFailed(): Promise<void> {
+    const driver = this.getDriver();
+    if (!driver) return;
+    try {
+      await driver.setSessionFailed();
+    } catch (error) {
+      logger.warn(
+        `[GptDriver] Failed to mark session as failed: ${this.sanitizeError(error)}`,
       );
     }
   }
