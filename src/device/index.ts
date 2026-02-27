@@ -727,7 +727,7 @@ export class Device {
    * @example
    * // Update permissions mid-session
    * await device.updateAppSettings({
-   *   'Permission Settings': { Camera: 'Allow' }
+   *   'Permission Settings': { Camera: 'ON' }
    * });
    *
    * @example
@@ -761,7 +761,7 @@ export class Device {
    *     'ALLOW LOCATION ACCESS': 'Always',
    *     'Precise Location': 'ON'
    *   },
-   *   Camera: 'Allow'
+   *   Camera: 'ON'
    * });
    */
   @boxedStep
