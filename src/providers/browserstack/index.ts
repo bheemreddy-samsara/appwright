@@ -15,6 +15,7 @@ import { downloadS3Artifact, isS3Uri, type DownloadedS3Artifact } from "./s3";
 import {
   applyAppiumSettingsToCapabilities,
   buildAppiumUpdateSettings,
+  resolveNoReset,
 } from "../appiumSettings";
 import { validateMp4 } from "../../validateMp4";
 
@@ -482,10 +483,13 @@ export class BrowserStackDeviceProvider implements DeviceProvider {
       }
     }
 
+    const noReset = resolveNoReset(deviceConfig);
+
     const capabilities: Record<string, unknown> = {
       "bstack:options": bstackOptions,
       "appium:app": process.env[envVarKey],
-      "appium:fullReset": true,
+      "appium:fullReset": !noReset,
+      "appium:noReset": noReset,
     };
 
     if (platformName === Platform.ANDROID) {

@@ -12,7 +12,10 @@ import {
   isEmulatorInstalled,
   startAppiumServer,
 } from "../appium";
-import { applyAppiumSettingsToCapabilities } from "../appiumSettings";
+import {
+  applyAppiumSettingsToCapabilities,
+  resolveNoReset,
+} from "../appiumSettings";
 import { FullProject } from "@playwright/test";
 import { validateBuildPath } from "../../utils";
 import { logger } from "../../logger";
@@ -113,6 +116,8 @@ Follow the steps mentioned in ${androidSimulatorConfigDocLink} to run test on An
       appLaunchableActivity = launchableActivity!;
     }
 
+    const noReset = resolveNoReset(deviceConfig);
+
     // Build capabilities with configurable appium settings
     const capabilities: Record<string, unknown> = {
       "appium:deviceName": deviceConfig.name,
@@ -124,7 +129,8 @@ Follow the steps mentioned in ${androidSimulatorConfigDocLink} to run test on An
       "appium:autoGrantPermissions": true,
       "appium:app": this.project.use.buildPath,
       "appium:autoAcceptAlerts": true,
-      "appium:fullReset": true,
+      "appium:fullReset": !noReset,
+      "appium:noReset": noReset,
       "appium:deviceOrientation": deviceConfig.orientation,
       "appium:wdaLaunchTimeout": 300_000,
     };

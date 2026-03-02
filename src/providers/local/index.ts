@@ -15,7 +15,10 @@ import {
   installDriver,
   startAppiumServer,
 } from "../appium";
-import { applyAppiumSettingsToCapabilities } from "../appiumSettings";
+import {
+  applyAppiumSettingsToCapabilities,
+  resolveNoReset,
+} from "../appiumSettings";
 import { validateBuildPath } from "../../utils";
 import { logger } from "../../logger";
 
@@ -115,6 +118,8 @@ To specify a device, use the udid property. Run "adb devices" to get the UDID fo
       }
     }
 
+    const noReset = resolveNoReset(deviceConfig);
+
     // Build capabilities with configurable appium settings
     const capabilities: Record<string, unknown> = {
       "appium:deviceName": deviceConfig.name,
@@ -125,7 +130,8 @@ To specify a device, use the udid property. Run "adb devices" to get the UDID fo
       "appium:autoGrantPermissions": true,
       "appium:app": this.project.use.buildPath,
       "appium:autoAcceptAlerts": true,
-      "appium:fullReset": true,
+      "appium:fullReset": !noReset,
+      "appium:noReset": noReset,
       "appium:deviceOrientation": deviceConfig.orientation,
     };
 
