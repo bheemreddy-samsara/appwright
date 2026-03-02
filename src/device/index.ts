@@ -571,6 +571,39 @@ export class Device {
   }
 
   /**
+   * Sets network connectivity for the device (Android only).
+   * Uses Appium's `mobile: setConnectivity` command to control wifi, data, and airplane mode.
+   *
+   * @param options.wifi - Enable/disable WiFi
+   * @param options.data - Enable/disable mobile data
+   * @param options.airplaneMode - Enable/disable airplane mode (default: false)
+   *
+   * @example
+   * ```ts
+   * // Go offline (airplane mode)
+   * await device.setNetworkConnection({ wifi: false, data: false, airplaneMode: true });
+   *
+   * // Go back online
+   * await device.setNetworkConnection({ wifi: true, data: false, airplaneMode: false });
+   * ```
+   */
+  @boxedStep
+  async setNetworkConnection(options: {
+    wifi: boolean;
+    data: boolean;
+    airplaneMode?: boolean;
+  }): Promise<void> {
+    this.assertAndroid("setNetworkConnection");
+    await this.webDriverClient.executeScript("mobile: setConnectivity", [
+      {
+        wifi: options.wifi,
+        data: options.data,
+        airplaneMode: options.airplaneMode ?? false,
+      },
+    ]);
+  }
+
+  /**
    * Retrieves text content from the clipboard of the mobile device. This is useful
    * after a "copy to clipboard" action has been performed. This returns base64 encoded string.
    *
@@ -781,6 +814,16 @@ export class Device {
     settings: IosPermissionSettings,
   ): Promise<void> {
     return this.updateAppSettings({ "Permission Settings": settings });
+  }
+
+  /** @private */
+  private assertAndroid(methodName: string): void {
+    if (this.getPlatform() !== Platform.ANDROID) {
+      throw new Error(
+        `${methodName} is only supported on Android. ` +
+          `Current platform: ${this.getPlatform()}`,
+      );
+    }
   }
 
   /**
