@@ -58,6 +58,18 @@ export class Device {
     this.persistentSyncEnabled = true;
   }
 
+  /**
+   * Sync the final test result to the device provider (e.g. BrowserStack).
+   * Must be called BEFORE close() — once the WebDriver session is deleted,
+   * providers reject further updates.
+   */
+  async finalizeTest(testInfo: TestInfo): Promise<void> {
+    const status = this.mapPlaywrightStatus(testInfo.status);
+    const reason =
+      status === "failed" ? this.failureReason(testInfo) : undefined;
+    await this.safeSync({ name: testInfo.title, status, reason });
+  }
+
   async ensurePersistentLifecycle(testInfo: TestInfo): Promise<void> {
     if (!this.shouldSyncPersistent()) {
       return;

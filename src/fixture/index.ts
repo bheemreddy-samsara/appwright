@@ -170,6 +170,7 @@ export const test = base.extend<TestLevelFixtures, WorkerLevelFixtures>({
 
     await deviceProvider.syncTestDetails?.({ name: testInfo.title });
     await use(device);
+    await device.finalizeTest(testInfo);
     await device.close();
     if (
       deviceProviderName === "emulator" ||
@@ -177,11 +178,6 @@ export const test = base.extend<TestLevelFixtures, WorkerLevelFixtures>({
     ) {
       await stopAppiumServer();
     }
-    await deviceProvider.syncTestDetails?.({
-      name: testInfo.title,
-      status: testInfo.status,
-      reason: testInfo.error?.message,
-    });
   },
   persistentDevice: [
     async ({}, use, workerInfo) => {
