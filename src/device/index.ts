@@ -290,6 +290,13 @@ export class Device {
     extract: async (extractions: string[]): Promise<Record<string, any>> => {
       return await this.gptDriverProvider().extract(extractions);
     },
+    /**
+     * Reset the GPT Driver session so the next call creates a fresh instance.
+     * Call between tests in persistent device fixtures for per-test isolation.
+     */
+    reset: (): void => {
+      this._gptDriverProvider?.reset();
+    },
   };
 
   /**
