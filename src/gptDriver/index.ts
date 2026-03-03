@@ -58,6 +58,18 @@ export class GptDriverProvider implements GptDriverApi {
   ) {}
 
   /**
+   * Reset the underlying GptDriver instance so the next call creates a fresh
+   * MobileBoost session with a new constructor invocation.
+   *
+   * Use in persistent device fixtures to get per-test session isolation
+   * without recreating the Device or WebDriver connection.
+   */
+  reset(): void {
+    this.driver = null;
+    this.testIdWarned = false;
+  }
+
+  /**
    * Resolve the testId for the current test context.
    * Uses the custom testIdFormat callback if configured, otherwise falls back
    * to Playwright's hash-based testId.
