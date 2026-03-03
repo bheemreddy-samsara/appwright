@@ -1,4 +1,15 @@
-import { AppiumSettings, Platform } from "../types";
+import { AppiumSettings, DeviceConfig, Platform } from "../types";
+
+/**
+ * Resolves the noReset flag from device config and the APPWRIGHT_NO_RESET env var.
+ * When true, the app is not uninstalled/reinstalled between sessions.
+ */
+export function resolveNoReset(deviceConfig: DeviceConfig): boolean {
+  return (
+    process.env.APPWRIGHT_NO_RESET === "true" ||
+    ("noReset" in deviceConfig && deviceConfig.noReset === true)
+  );
+}
 
 type AppiumCapabilities = Record<string, unknown>;
 

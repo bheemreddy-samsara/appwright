@@ -7,6 +7,7 @@ import { FullProject } from "@playwright/test";
 import { Device } from "../../device";
 import { logger } from "../../logger";
 import { getAuthHeader } from "./utils";
+import { resolveNoReset } from "../appiumSettings";
 
 type LambdatestSessionDetails = {
   name: string;
@@ -320,6 +321,8 @@ export class LambdaTestDeviceProvider implements DeviceProvider {
         `process.env.${envVarKey} is not set. Did the file upload work?`,
       );
     }
+    const noReset = resolveNoReset(deviceConfig);
+
     return {
       port: 443,
       protocol: "https",
@@ -345,6 +348,8 @@ export class LambdaTestDeviceProvider implements DeviceProvider {
         project: this.projectName,
         autoGrantPermissions: true,
         autoAcceptAlerts: true,
+        fullReset: !noReset,
+        noReset,
         isRealMobile: true,
         enableImageInjection: (this.project.use.device as LambdaTestConfig)
           ?.enableCameraImageInjection,

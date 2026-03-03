@@ -235,6 +235,15 @@ export type BrowserStackConfig = {
    * Defaults to automatically granting Android permissions and accepting iOS alerts.
    */
   permissionPrompts?: BrowserStackPermissionPrompts;
+
+  /**
+   * When true, the app is not uninstalled/reinstalled between sessions.
+   * The app will be installed automatically if not already present on the device.
+   * Useful for local development when iterating on tests with an already-configured app.
+   * Can also be enabled via the APPWRIGHT_NO_RESET environment variable.
+   * Defaults to false (full reset).
+   */
+  noReset?: boolean;
 };
 
 export type BrowserStackPermissionPrompts = {
@@ -292,6 +301,15 @@ export type LambdaTestConfig = {
    * Default is false.
    */
   tunnel?: boolean;
+
+  /**
+   * When true, the app is not uninstalled/reinstalled between sessions.
+   * The app will be installed automatically if not already present on the device.
+   * Useful for local development when iterating on tests with an already-configured app.
+   * Can also be enabled via the APPWRIGHT_NO_RESET environment variable.
+   * Defaults to false (full reset).
+   */
+  noReset?: boolean;
 };
 
 export type AWSDeviceFarmInteractionMode =
@@ -353,6 +371,14 @@ export type AWSDeviceFarmConfig = {
    * Any additional capabilities that should be merged into the Appium session.
    */
   additionalCapabilities?: Record<string, unknown>;
+  /**
+   * When true, the app is not uninstalled/reinstalled between sessions.
+   * The app will be installed automatically if not already present on the device.
+   * Useful for local development when iterating on tests with an already-configured app.
+   * Can also be enabled via the APPWRIGHT_NO_RESET environment variable.
+   * Defaults to false (full reset).
+   */
+  noReset?: boolean;
   /**
    * IAM role ARN to assume before making Device Farm API calls.
    * When provided, Appwright will use STS AssumeRole to obtain temporary credentials.
@@ -503,6 +529,15 @@ export type LocalDeviceConfig = {
    * Appium settings for controlling UIAutomator2/XCUITest behavior.
    */
   appiumSettings?: AppiumSettings;
+
+  /**
+   * When true, the app is not uninstalled/reinstalled between sessions.
+   * The app will be installed automatically if not already present on the device.
+   * Useful for local development when iterating on tests with an already-configured app.
+   * Can also be enabled via the APPWRIGHT_NO_RESET environment variable.
+   * Defaults to false (full reset).
+   */
+  noReset?: boolean;
 };
 
 /**
@@ -528,6 +563,15 @@ export type EmulatorConfig = {
    * Appium settings for controlling UIAutomator2/XCUITest behavior.
    */
   appiumSettings?: AppiumSettings;
+
+  /**
+   * When true, the app is not uninstalled/reinstalled between sessions.
+   * The app will be installed automatically if not already present on the device.
+   * Useful for local development when iterating on tests with an already-configured app.
+   * Can also be enabled via the APPWRIGHT_NO_RESET environment variable.
+   * Defaults to false (full reset).
+   */
+  noReset?: boolean;
 };
 
 /**

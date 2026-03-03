@@ -11,6 +11,7 @@ import {
 } from "../../types";
 import { Device } from "../../device";
 import { logger } from "../../logger";
+import { resolveNoReset } from "../appiumSettings";
 import {
   DeviceFarmClient,
   CreateUploadCommand,
@@ -394,11 +395,14 @@ export class AWSDeviceFarmProvider implements DeviceProvider {
     const isAndroid = this.platform === Platform.ANDROID;
     const automationName = isAndroid ? "UiAutomator2" : "XCUITest";
 
+    const noReset = resolveNoReset(this.deviceConfig);
+
     const capabilities: Record<string, unknown> = {
       platformName: isAndroid ? "Android" : "iOS",
       "appium:automationName": automationName,
       "appium:newCommandTimeout": 240,
-      "appium:noReset": false,
+      "appium:fullReset": !noReset,
+      "appium:noReset": noReset,
     };
 
     // CRITICAL: Include app capability for Appium to work
