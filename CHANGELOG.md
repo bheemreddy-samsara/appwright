@@ -1,5 +1,15 @@
 # appwright
 
+## 0.12.0
+
+### Minor Changes
+
+- faa7395: Add `noReset` option to all device configs and `APPWRIGHT_NO_RESET` environment variable. When enabled, the app is not uninstalled/reinstalled between sessions — Appium installs the app only if not already present. Useful for local development iteration with an already-configured app.
+
+### Patch Changes
+
+- cd55807: Add `device.gptDriver.reset()` for per-test GPT Driver session isolation
+
 ## 0.11.0
 
 ### Minor Changes
