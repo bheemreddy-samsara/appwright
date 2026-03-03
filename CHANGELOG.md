@@ -1,5 +1,11 @@
 # appwright
 
+## 0.11.0
+
+### Minor Changes
+
+- 44ab1a5: Add `setNetworkConnection` method to Device class for controlling Android network connectivity via Appium's `mobile: setConnectivity` command. Supports toggling wifi, mobile data, and airplane mode.
+
 ## 0.10.2
 
 ### Patch Changes
