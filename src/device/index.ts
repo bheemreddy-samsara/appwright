@@ -291,6 +291,15 @@ export class Device {
       return await this.gptDriverProvider().extract(extractions);
     },
     /**
+     * Override the testId for the current GPT Driver session.
+     * Use in worker-scoped fixtures to tag shared sessions (e.g. login)
+     * with a descriptive ID instead of inheriting a random test's ID.
+     * Cleared automatically on reset().
+     */
+    setTestId: (testId: string): void => {
+      this.gptDriverProvider().setTestId(testId);
+    },
+    /**
      * Reset the GPT Driver session so the next call creates a fresh instance.
      * Call between tests in persistent device fixtures for per-test isolation.
      */

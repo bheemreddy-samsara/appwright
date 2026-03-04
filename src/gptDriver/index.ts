@@ -36,6 +36,10 @@ export interface GptDriverApi {
   setSessionSucceeded(): Promise<void>;
   /** Mark the MobileBoost session as failed. Call after test fails. */
   setSessionFailed(): Promise<void>;
+  /** Override the testId for the current GPT Driver session. */
+  setTestId(testId: string): void;
+  /** Reset the GPT Driver session so the next call creates a fresh instance. */
+  reset(): void;
 }
 
 /**
@@ -51,6 +55,7 @@ export interface GptDriverApi {
 export class GptDriverProvider implements GptDriverApi {
   private driver: GptDriver | null = null;
   private testIdWarned = false;
+  private testIdOverride?: string;
 
   constructor(
     private webDriverClient: WebDriverClient,
@@ -67,6 +72,36 @@ export class GptDriverProvider implements GptDriverApi {
   reset(): void {
     this.driver = null;
     this.testIdWarned = false;
+    this.testIdOverride = undefined;
+  }
+
+  /**
+   * Override the testId used for the next GPT Driver session.
+   *
+   * When set, this value takes priority over both `testIdFormat` and
+   * Playwright's `testInfo.testId`. Cleared on `reset()` so each test
+   * can set its own override independently.
+   *
+   * Typical use: tag a worker-scoped login fixture with a descriptive ID
+   * (e.g. "worker-login-setup") so MobileBoost sessions aren't
+   * mis-attributed to whichever test triggered the worker first.
+   */
+  setTestId(testId: string): void {
+    this.testIdOverride = testId;
+    this.applyDriverTestId(testId);
+  }
+
+  /**
+   * Mutate the underlying gpt-driver-node testId at runtime.
+   * gpt-driver-node declares testId as private in TS but it's a plain
+   * JS property at runtime — safe to mutate directly.
+   */
+  private applyDriverTestId(testId: string): boolean {
+    if (this.driver && "testId" in (this.driver as any)) {
+      (this.driver as any).testId = testId;
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -115,7 +150,10 @@ export class GptDriverProvider implements GptDriverApi {
       driver: this.webDriverClient as any,
       serverConfig: { url: this.getAppiumUrl() },
       cachingMode: "INTERACTION_REGION",
-      testId: this.resolveTestId(test.info()) ?? `test-${Date.now()}`,
+      testId:
+        this.testIdOverride ??
+        this.resolveTestId(test.info()) ??
+        `test-${Date.now()}`,
       ...(this.options?.additionalUserContext != null && {
         additionalUserContext: this.options.additionalUserContext,
       }),
@@ -136,19 +174,19 @@ export class GptDriverProvider implements GptDriverApi {
 
     // Update testId to current test context so persistent device fixtures
     // report the correct test in GPT Driver API calls.
-    // gpt-driver-node declares testId as private in TS but it's a plain
-    // JS property at runtime — safe to mutate directly.
-    // TODO: Replace with public setTestId() if gpt-driver-node exposes one.
-    const currentTestId = this.resolveTestId(test.info());
-    if (currentTestId && "testId" in (driver as any)) {
-      (driver as any).testId = currentTestId;
-    } else if (currentTestId && !this.testIdWarned) {
-      console.warn(
-        "[GptDriver] Cannot update testId — property not found on driver instance. " +
-          "GPT Driver sessions may be attributed to the wrong test. " +
-          "Check if gpt-driver-node renamed or removed the testId field.",
-      );
-      this.testIdWarned = true;
+    // Skip when a manual override is active — the caller owns the testId.
+    if (!this.testIdOverride) {
+      const currentTestId = this.resolveTestId(test.info());
+      if (currentTestId) {
+        if (!this.applyDriverTestId(currentTestId) && !this.testIdWarned) {
+          console.warn(
+            "[GptDriver] Cannot update testId — property not found on driver instance. " +
+              "GPT Driver sessions may be attributed to the wrong test. " +
+              "Check if gpt-driver-node renamed or removed the testId field.",
+          );
+          this.testIdWarned = true;
+        }
+      }
     }
 
     return driver;
